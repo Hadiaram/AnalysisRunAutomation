@@ -1,0 +1,223 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\sectionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\sectionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\diaphragmmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\diaphragmmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\loadassignmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\loadassignmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\masssourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\masssourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\analysismanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\analysismanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\loadmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\loadmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\meshmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\meshmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\sectionassignmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\sectionassignmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|c:\\users\\hmbashir\\source\\repos\\analysisrunautomation\\analysisrunautomation\\boundarymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CE7FEEB-EDD7-4B50-A199-CBF5C75130D5}|AnalysisRunAutomation\\ETABS_Plugin.csproj|solutionrelative:analysisrunautomation\\boundarymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Form1.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\Form1.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\Form1.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\Form1.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\Form1.cs",
+              "ViewState": "AgIAAMUBAAAAAAAAAAAAAOEBAABBAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-26T12:58:48.068Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "LoadManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\LoadManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\LoadManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\LoadManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\LoadManager.cs",
+              "ViewState": "AgIAANUAAAAAAAAAAAAQwAMBAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-16T06:42:07.405Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SectionManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\SectionManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\SectionManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\SectionManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\SectionManager.cs",
+              "ViewState": "AgIAAOoAAAAAAAAAAAAAAMMBAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-16T06:21:58.204Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AnalysisManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\AnalysisManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\AnalysisManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\AnalysisManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\AnalysisManager.cs",
+              "ViewState": "AgIAAPIAAAAAAAAAAAAuwHEBAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-16T04:27:36.496Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "MassSourceManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\MassSourceManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\MassSourceManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\MassSourceManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\MassSourceManager.cs",
+              "ViewState": "AgIAAGkBAAAAAAAAAAAmwDYBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-10T11:07:07.861Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "LoadAssignmentManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\LoadAssignmentManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\LoadAssignmentManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\LoadAssignmentManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\LoadAssignmentManager.cs",
+              "ViewState": "AgIAACwBAAAAAAAAAAAAwEUBAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-10T11:04:02.21Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "SectionAssignmentManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\SectionAssignmentManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\SectionAssignmentManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\SectionAssignmentManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\SectionAssignmentManager.cs",
+              "ViewState": "AgIAAIIBAAAAAAAAAAAQwJ0BAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-10T11:03:37.104Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "MeshManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\MeshManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\MeshManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\MeshManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\MeshManager.cs",
+              "ViewState": "AgIAAFoBAAAAAAAAAAAQwHUBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-10T08:49:22.204Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DiaphragmManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\DiaphragmManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\DiaphragmManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\DiaphragmManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\DiaphragmManager.cs",
+              "ViewState": "AgIAAEEBAAAAAAAAAAAQwEkBAABDAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-10T06:30:53.491Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Form1.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\Form1.Designer.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\Form1.Designer.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\Form1.Designer.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\Form1.Designer.cs",
+              "ViewState": "AgIAALIAAAAAAAAAAAAQwMIAAAA+AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-26T13:08:02.632Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Form1.cs [Design]",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\Form1.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\Form1.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\Form1.cs [Design]",
+              "RelativeToolTip": "AnalysisRunAutomation\\Form1.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-26T13:08:01.776Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "BoundaryManager.cs",
+              "DocumentMoniker": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\BoundaryManager.cs",
+              "RelativeDocumentMoniker": "AnalysisRunAutomation\\BoundaryManager.cs",
+              "ToolTip": "C:\\Users\\hmbashir\\source\\repos\\AnalysisRunAutomation\\AnalysisRunAutomation\\BoundaryManager.cs",
+              "RelativeToolTip": "AnalysisRunAutomation\\BoundaryManager.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAuwB8AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-26T12:56:06.804Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
