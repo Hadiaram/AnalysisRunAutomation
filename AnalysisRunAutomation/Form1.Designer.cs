@@ -1,4 +1,4 @@
-﻿namespace ETABS_Plugin
+namespace ETABS_Plugin
 {
     partial class Form1
     {
@@ -29,6 +29,13 @@
         private void InitializeComponent()
         {
             lblTitle = new Label();
+            tabControl = new TabControl();
+            tabSetup = new TabPage();
+            tabWalls = new TabPage();
+            tabAnalysis = new TabPage();
+            tabLogs = new TabPage();
+
+            // Setup tab controls
             grpMaterials = new GroupBox();
             lblMPa = new Label();
             numConcreteStrength = new NumericUpDown();
@@ -39,6 +46,8 @@
             chkBeams = new CheckBox();
             chkColumns = new CheckBox();
             btnCreateSections = new Button();
+
+            // Analysis tab controls
             btnCreateLoads = new Button();
             btnCreateBoundary = new Button();
             btnCreateDiaphragms = new Button();
@@ -48,293 +57,336 @@
             btnSetupMass = new Button();
             btnRunAnalysis = new Button();
             btnRunWorkflow = new Button();
+
+            // Logs tab controls
             txtStatus = new TextBox();
-            lblStatus = new Label();
+
+            tabControl.SuspendLayout();
+            tabSetup.SuspendLayout();
+            tabAnalysis.SuspendLayout();
+            tabLogs.SuspendLayout();
             grpMaterials.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numConcreteStrength).BeginInit();
             grpSections.SuspendLayout();
             SuspendLayout();
-            // 
+
+            //
             // lblTitle
-            // 
+            //
             lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblTitle.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             lblTitle.Location = new Point(12, 11);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(294, 25);
+            lblTitle.Size = new Size(400, 25);
             lblTitle.TabIndex = 0;
-            lblTitle.Text = "ETABS Workflow Automation";
-            // 
+            lblTitle.Text = "ETABS Automation (Analysis + Walls)";
+
+            //
+            // tabControl
+            //
+            tabControl.Controls.Add(tabSetup);
+            tabControl.Controls.Add(tabWalls);
+            tabControl.Controls.Add(tabAnalysis);
+            tabControl.Controls.Add(tabLogs);
+            tabControl.Location = new Point(12, 50);
+            tabControl.Name = "tabControl";
+            tabControl.SelectedIndex = 0;
+            tabControl.Size = new Size(760, 790);
+            tabControl.TabIndex = 1;
+
+            //
+            // tabSetup
+            //
+            tabSetup.Controls.Add(grpMaterials);
+            tabSetup.Controls.Add(grpSections);
+            tabSetup.Location = new Point(4, 29);
+            tabSetup.Name = "tabSetup";
+            tabSetup.Padding = new Padding(3);
+            tabSetup.Size = new Size(752, 757);
+            tabSetup.TabIndex = 0;
+            tabSetup.Text = "Setup";
+            tabSetup.UseVisualStyleBackColor = true;
+
+            //
             // grpMaterials
-            // 
+            //
             grpMaterials.Controls.Add(lblMPa);
             grpMaterials.Controls.Add(numConcreteStrength);
             grpMaterials.Controls.Add(lblConcreteStrength);
-            grpMaterials.Location = new Point(17, 62);
-            grpMaterials.Margin = new Padding(3, 4, 3, 4);
+            grpMaterials.Location = new Point(17, 20);
             grpMaterials.Name = "grpMaterials";
-            grpMaterials.Padding = new Padding(3, 4, 3, 4);
             grpMaterials.Size = new Size(300, 100);
-            grpMaterials.TabIndex = 1;
+            grpMaterials.TabIndex = 0;
             grpMaterials.TabStop = false;
             grpMaterials.Text = "Material Properties";
-            // 
+
+            //
             // lblMPa
-            // 
+            //
             lblMPa.AutoSize = true;
             lblMPa.Location = new Point(240, 44);
             lblMPa.Name = "lblMPa";
             lblMPa.Size = new Size(37, 20);
-            lblMPa.TabIndex = 2;
             lblMPa.Text = "MPa";
-            // 
+
+            //
             // numConcreteStrength
-            // 
+            //
             numConcreteStrength.Location = new Point(150, 41);
-            numConcreteStrength.Margin = new Padding(3, 4, 3, 4);
             numConcreteStrength.Minimum = new decimal(new int[] { 15, 0, 0, 0 });
             numConcreteStrength.Name = "numConcreteStrength";
             numConcreteStrength.Size = new Size(80, 27);
-            numConcreteStrength.TabIndex = 1;
             numConcreteStrength.Value = new decimal(new int[] { 25, 0, 0, 0 });
-            // 
+
+            //
             // lblConcreteStrength
-            // 
+            //
             lblConcreteStrength.AutoSize = true;
             lblConcreteStrength.Location = new Point(15, 44);
             lblConcreteStrength.Name = "lblConcreteStrength";
             lblConcreteStrength.Size = new Size(131, 20);
-            lblConcreteStrength.TabIndex = 0;
             lblConcreteStrength.Text = "Concrete Strength:";
-            // 
+
+            //
             // grpSections
-            // 
+            //
             grpSections.Controls.Add(chkWalls);
             grpSections.Controls.Add(chkSlabs);
             grpSections.Controls.Add(chkBeams);
             grpSections.Controls.Add(chkColumns);
             grpSections.Controls.Add(btnCreateSections);
-            grpSections.Controls.Add(btnCreateLoads);
-            grpSections.Controls.Add(btnCreateBoundary);
-            grpSections.Controls.Add(btnCreateDiaphragms);
-            grpSections.Controls.Add(btnApplyMesh);
-            grpSections.Controls.Add(btnAssignSections);
-            grpSections.Controls.Add(btnAssignLoads);
-            grpSections.Controls.Add(btnSetupMass);
-            grpSections.Controls.Add(btnRunAnalysis);
-            grpSections.Location = new Point(17, 188);
-            grpSections.Margin = new Padding(3, 4, 3, 4);
+            grpSections.Location = new Point(17, 140);
             grpSections.Name = "grpSections";
-            grpSections.Padding = new Padding(3, 4, 3, 4);
-            grpSections.Size = new Size(300, 410);
-            grpSections.TabIndex = 2;
+            grpSections.Size = new Size(300, 180);
+            grpSections.TabIndex = 1;
             grpSections.TabStop = false;
-            grpSections.Text = "Workflow Steps";
-            // 
+            grpSections.Text = "Section Creation";
+
+            //
             // chkWalls
-            // 
+            //
             chkWalls.AutoSize = true;
             chkWalls.Checked = true;
             chkWalls.CheckState = CheckState.Checked;
             chkWalls.Location = new Point(110, 60);
-            chkWalls.Margin = new Padding(3, 4, 3, 4);
             chkWalls.Name = "chkWalls";
             chkWalls.Size = new Size(66, 24);
-            chkWalls.TabIndex = 4;
             chkWalls.Text = "Walls";
             chkWalls.UseVisualStyleBackColor = true;
-            // 
+
+            //
             // chkSlabs
-            // 
+            //
             chkSlabs.AutoSize = true;
             chkSlabs.Checked = true;
             chkSlabs.CheckState = CheckState.Checked;
             chkSlabs.Location = new Point(18, 60);
-            chkSlabs.Margin = new Padding(3, 4, 3, 4);
             chkSlabs.Name = "chkSlabs";
             chkSlabs.Size = new Size(66, 24);
-            chkSlabs.TabIndex = 3;
             chkSlabs.Text = "Slabs";
             chkSlabs.UseVisualStyleBackColor = true;
-            // 
+
+            //
             // chkBeams
-            // 
+            //
             chkBeams.AutoSize = true;
             chkBeams.Checked = true;
             chkBeams.CheckState = CheckState.Checked;
             chkBeams.Location = new Point(110, 30);
-            chkBeams.Margin = new Padding(3, 4, 3, 4);
             chkBeams.Name = "chkBeams";
             chkBeams.Size = new Size(75, 24);
-            chkBeams.TabIndex = 2;
             chkBeams.Text = "Beams";
             chkBeams.UseVisualStyleBackColor = true;
-            // 
+
+            //
             // chkColumns
-            // 
+            //
             chkColumns.AutoSize = true;
             chkColumns.Checked = true;
             chkColumns.CheckState = CheckState.Checked;
             chkColumns.Location = new Point(18, 30);
-            chkColumns.Margin = new Padding(3, 4, 3, 4);
             chkColumns.Name = "chkColumns";
             chkColumns.Size = new Size(88, 24);
-            chkColumns.TabIndex = 1;
             chkColumns.Text = "Columns";
             chkColumns.UseVisualStyleBackColor = true;
-            // 
+
+            //
             // btnCreateSections
-            // 
-            btnCreateSections.Location = new Point(18, 100);
-            btnCreateSections.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnCreateSections.Location = new Point(18, 110);
             btnCreateSections.Name = "btnCreateSections";
-            btnCreateSections.Size = new Size(120, 38);
-            btnCreateSections.TabIndex = 5;
+            btnCreateSections.Size = new Size(250, 50);
             btnCreateSections.Text = "Create Sections";
             btnCreateSections.UseVisualStyleBackColor = true;
             btnCreateSections.Click += btnCreateSections_Click;
-            // 
+
+            //
+            // tabWalls
+            //
+            tabWalls.Location = new Point(4, 29);
+            tabWalls.Name = "tabWalls";
+            tabWalls.Padding = new Padding(3);
+            tabWalls.Size = new Size(752, 757);
+            tabWalls.TabIndex = 1;
+            tabWalls.Text = "Walls";
+            tabWalls.UseVisualStyleBackColor = true;
+
+            //
+            // tabAnalysis
+            //
+            tabAnalysis.Controls.Add(btnCreateLoads);
+            tabAnalysis.Controls.Add(btnCreateBoundary);
+            tabAnalysis.Controls.Add(btnCreateDiaphragms);
+            tabAnalysis.Controls.Add(btnApplyMesh);
+            tabAnalysis.Controls.Add(btnAssignSections);
+            tabAnalysis.Controls.Add(btnAssignLoads);
+            tabAnalysis.Controls.Add(btnSetupMass);
+            tabAnalysis.Controls.Add(btnRunAnalysis);
+            tabAnalysis.Controls.Add(btnRunWorkflow);
+            tabAnalysis.Location = new Point(4, 29);
+            tabAnalysis.Name = "tabAnalysis";
+            tabAnalysis.Size = new Size(752, 757);
+            tabAnalysis.TabIndex = 2;
+            tabAnalysis.Text = "Analysis";
+            tabAnalysis.UseVisualStyleBackColor = true;
+
+            //
             // btnCreateLoads
-            // 
-            btnCreateLoads.Location = new Point(148, 100);
-            btnCreateLoads.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnCreateLoads.Location = new Point(20, 20);
             btnCreateLoads.Name = "btnCreateLoads";
-            btnCreateLoads.Size = new Size(120, 38);
-            btnCreateLoads.TabIndex = 6;
-            btnCreateLoads.Text = "Create Loads";
+            btnCreateLoads.Size = new Size(250, 40);
+            btnCreateLoads.Text = "Create Load Patterns";
             btnCreateLoads.UseVisualStyleBackColor = true;
             btnCreateLoads.Click += btnCreateLoads_Click;
-            // 
+
+            //
             // btnCreateBoundary
-            // 
-            btnCreateBoundary.Location = new Point(148, 145);
-            btnCreateBoundary.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnCreateBoundary.Location = new Point(20, 70);
             btnCreateBoundary.Name = "btnCreateBoundary";
-            btnCreateBoundary.Size = new Size(120, 38);
-            btnCreateBoundary.TabIndex = 8;
-            btnCreateBoundary.Text = "Apply Fixed BC";
+            btnCreateBoundary.Size = new Size(250, 40);
+            btnCreateBoundary.Text = "Apply Fixed Boundary Conditions";
             btnCreateBoundary.UseVisualStyleBackColor = true;
             btnCreateBoundary.Click += btnApplyBCs_Click;
-            // 
+
+            //
             // btnCreateDiaphragms
-            // 
-            btnCreateDiaphragms.Location = new Point(18, 190);
-            btnCreateDiaphragms.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnCreateDiaphragms.Location = new Point(20, 120);
             btnCreateDiaphragms.Name = "btnCreateDiaphragms";
-            btnCreateDiaphragms.Size = new Size(250, 38);
-            btnCreateDiaphragms.TabIndex = 9;
+            btnCreateDiaphragms.Size = new Size(250, 40);
             btnCreateDiaphragms.Text = "Create Diaphragms";
             btnCreateDiaphragms.UseVisualStyleBackColor = true;
             btnCreateDiaphragms.Click += btnCreateDiaphragms_Click;
-            // 
+
+            //
             // btnApplyMesh
-            // 
-            btnApplyMesh.Location = new Point(18, 145);
-            btnApplyMesh.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnApplyMesh.Location = new Point(20, 170);
             btnApplyMesh.Name = "btnApplyMesh";
-            btnApplyMesh.Size = new Size(120, 38);
-            btnApplyMesh.TabIndex = 7;
+            btnApplyMesh.Size = new Size(250, 40);
             btnApplyMesh.Text = "Apply 1m Mesh";
             btnApplyMesh.UseVisualStyleBackColor = true;
             btnApplyMesh.Click += btnApplyMesh_Click;
-            // 
+
+            //
             // btnAssignSections
-            // 
-            btnAssignSections.Location = new Point(18, 235);
-            btnAssignSections.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnAssignSections.Location = new Point(20, 220);
             btnAssignSections.Name = "btnAssignSections";
-            btnAssignSections.Size = new Size(250, 38);
-            btnAssignSections.TabIndex = 10;
-            btnAssignSections.Text = "Assign Sections";
+            btnAssignSections.Size = new Size(250, 40);
+            btnAssignSections.Text = "Assign Sections Intelligently";
             btnAssignSections.UseVisualStyleBackColor = true;
             btnAssignSections.Click += btnAssignSections_Click;
-            // 
+
+            //
             // btnAssignLoads
-            // 
-            btnAssignLoads.Location = new Point(18, 280);
-            btnAssignLoads.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnAssignLoads.Location = new Point(20, 270);
             btnAssignLoads.Name = "btnAssignLoads";
-            btnAssignLoads.Size = new Size(120, 38);
-            btnAssignLoads.TabIndex = 11;
-            btnAssignLoads.Text = "Assign Loads";
+            btnAssignLoads.Size = new Size(250, 40);
+            btnAssignLoads.Text = "Assign Loads to Slabs";
             btnAssignLoads.UseVisualStyleBackColor = true;
             btnAssignLoads.Click += btnAssignLoads_Click;
-            // 
+
+            //
             // btnSetupMass
-            // 
-            btnSetupMass.Location = new Point(148, 280);
-            btnSetupMass.Margin = new Padding(3, 4, 3, 4);
+            //
+            btnSetupMass.Location = new Point(20, 320);
             btnSetupMass.Name = "btnSetupMass";
-            btnSetupMass.Size = new Size(120, 38);
-            btnSetupMass.TabIndex = 12;
-            btnSetupMass.Text = "Setup Mass";
+            btnSetupMass.Size = new Size(250, 40);
+            btnSetupMass.Text = "Setup Seismic Mass";
             btnSetupMass.UseVisualStyleBackColor = true;
             btnSetupMass.Click += btnSetupMass_Click;
-            // 
+
+            //
             // btnRunAnalysis
-            // 
+            //
             btnRunAnalysis.BackColor = Color.LightGreen;
-            btnRunAnalysis.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnRunAnalysis.Location = new Point(18, 325);
-            btnRunAnalysis.Margin = new Padding(3, 4, 3, 4);
+            btnRunAnalysis.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
+            btnRunAnalysis.Location = new Point(20, 380);
             btnRunAnalysis.Name = "btnRunAnalysis";
-            btnRunAnalysis.Size = new Size(250, 45);
-            btnRunAnalysis.TabIndex = 13;
+            btnRunAnalysis.Size = new Size(250, 50);
             btnRunAnalysis.Text = "▶ RUN ANALYSIS";
             btnRunAnalysis.UseVisualStyleBackColor = false;
             btnRunAnalysis.Click += btnRunAnalysis_Click;
-            // 
+
+            //
             // btnRunWorkflow
-            // 
+            //
             btnRunWorkflow.BackColor = Color.LightBlue;
-            btnRunWorkflow.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnRunWorkflow.Location = new Point(17, 623);
-            btnRunWorkflow.Margin = new Padding(3, 4, 3, 4);
+            btnRunWorkflow.Font = new Font("Microsoft Sans Serif", 11F, FontStyle.Bold);
+            btnRunWorkflow.Location = new Point(20, 450);
             btnRunWorkflow.Name = "btnRunWorkflow";
-            btnRunWorkflow.Size = new Size(300, 50);
-            btnRunWorkflow.TabIndex = 3;
+            btnRunWorkflow.Size = new Size(250, 60);
             btnRunWorkflow.Text = "Run Complete Workflow";
             btnRunWorkflow.UseVisualStyleBackColor = false;
             btnRunWorkflow.Click += btnRunWorkflow_Click;
-            // 
+
+            //
+            // tabLogs
+            //
+            tabLogs.Controls.Add(txtStatus);
+            tabLogs.Location = new Point(4, 29);
+            tabLogs.Name = "tabLogs";
+            tabLogs.Size = new Size(752, 757);
+            tabLogs.TabIndex = 3;
+            tabLogs.Text = "Logs";
+            tabLogs.UseVisualStyleBackColor = true;
+
+            //
             // txtStatus
-            // 
-            txtStatus.Location = new Point(17, 723);
-            txtStatus.Margin = new Padding(3, 4, 3, 4);
+            //
+            txtStatus.Dock = DockStyle.Fill;
+            txtStatus.Font = new Font("Consolas", 9F);
+            txtStatus.Location = new Point(3, 3);
             txtStatus.Multiline = true;
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
             txtStatus.ScrollBars = ScrollBars.Vertical;
-            txtStatus.Size = new Size(300, 149);
-            txtStatus.TabIndex = 4;
-            // 
-            // lblStatus
-            // 
-            lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(17, 697);
-            lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(52, 20);
-            lblStatus.TabIndex = 5;
-            lblStatus.Text = "Status:";
-            // 
+            txtStatus.Size = new Size(746, 751);
+            txtStatus.TabIndex = 0;
+
+            //
             // Form1
-            // 
+            //
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(340, 897);
-            Controls.Add(lblStatus);
-            Controls.Add(txtStatus);
-            Controls.Add(btnRunWorkflow);
-            Controls.Add(grpSections);
-            Controls.Add(grpMaterials);
+            ClientSize = new Size(784, 861);
+            Controls.Add(tabControl);
             Controls.Add(lblTitle);
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            Margin = new Padding(3, 4, 3, 4);
             MaximizeBox = false;
             Name = "Form1";
-            Text = "ETABS Workflow Plugin";
+            Text = "ETABS Automation Plugin";
             FormClosed += Form1_FormClosed;
             Load += Form1_Load;
+            tabControl.ResumeLayout(false);
+            tabSetup.ResumeLayout(false);
+            tabAnalysis.ResumeLayout(false);
+            tabLogs.ResumeLayout(false);
+            tabLogs.PerformLayout();
             grpMaterials.ResumeLayout(false);
             grpMaterials.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numConcreteStrength).EndInit();
@@ -346,27 +398,37 @@
 
         #endregion
 
-        private System.Windows.Forms.Label lblTitle;
-        private System.Windows.Forms.GroupBox grpMaterials;
-        private System.Windows.Forms.Label lblConcreteStrength;
-        private System.Windows.Forms.NumericUpDown numConcreteStrength;
-        private System.Windows.Forms.Label lblMPa;
-        private System.Windows.Forms.GroupBox grpSections;
-        private System.Windows.Forms.Button btnCreateSections;
-        private System.Windows.Forms.Button btnCreateLoads;
-        private System.Windows.Forms.Button btnCreateBoundary;
-        private System.Windows.Forms.Button btnCreateDiaphragms;
-        private System.Windows.Forms.Button btnApplyMesh;
-        private System.Windows.Forms.Button btnAssignSections;
-        private System.Windows.Forms.Button btnAssignLoads;
-        private System.Windows.Forms.Button btnSetupMass;
-        private System.Windows.Forms.Button btnRunAnalysis;
-        private System.Windows.Forms.CheckBox chkColumns;
-        private System.Windows.Forms.CheckBox chkBeams;
-        private System.Windows.Forms.CheckBox chkSlabs;
-        private System.Windows.Forms.CheckBox chkWalls;
-        private System.Windows.Forms.Button btnRunWorkflow;
-        private System.Windows.Forms.TextBox txtStatus;
-        private System.Windows.Forms.Label lblStatus;
+        private Label lblTitle;
+        private TabControl tabControl;
+        private TabPage tabSetup;
+        private TabPage tabWalls;
+        private TabPage tabAnalysis;
+        private TabPage tabLogs;
+
+        // Setup tab controls
+        private GroupBox grpMaterials;
+        private Label lblConcreteStrength;
+        private NumericUpDown numConcreteStrength;
+        private Label lblMPa;
+        private GroupBox grpSections;
+        private CheckBox chkColumns;
+        private CheckBox chkBeams;
+        private CheckBox chkSlabs;
+        private CheckBox chkWalls;
+        private Button btnCreateSections;
+
+        // Analysis tab controls
+        private Button btnCreateLoads;
+        private Button btnCreateBoundary;
+        private Button btnCreateDiaphragms;
+        private Button btnApplyMesh;
+        private Button btnAssignSections;
+        private Button btnAssignLoads;
+        private Button btnSetupMass;
+        private Button btnRunAnalysis;
+        private Button btnRunWorkflow;
+
+        // Logs tab control
+        private TextBox txtStatus;
     }
 }

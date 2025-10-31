@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ETABSv1;
+using Etabs.Automation.Abstractions;
+using Etabs.Automation.Walls.Services;
 
 namespace ETABS_Plugin
 {
@@ -24,6 +26,8 @@ namespace ETABS_Plugin
         private LoadAssignmentManager _LoadAssignmentManager = null;
         private MassSourceManager _MassSourceManager = null;
         private AnalysisManager _AnalysisManager = null;
+        private IEtabsGateway _EtabsGateway = null;
+        private IWallsService _WallsService = null;
 
         public Form1(cSapModel SapModel, cPluginCallback Plugin)
         {
@@ -39,22 +43,22 @@ namespace ETABS_Plugin
             _MassSourceManager = new MassSourceManager(_SapModel);
             _AnalysisManager = new AnalysisManager(_SapModel);
 
+            // Initialize Walls functionality
+            _EtabsGateway = new EtabsGateway(_SapModel);
+            _WallsService = new WallsService(_EtabsGateway);
+
             InitializeComponent();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Example usage - create all standard sections
-            bool success = _SectionManager.CreateAllStandardSections(4000);
-            if (success)
-            {
-                MessageBox.Show("Standard sections created successfully!");
-            }
-            else
-            {
-                MessageBox.Show("Error creating sections");
-            }
+            // Add WallsPanel to the Walls tab
+            var wallsPanel = new WallsPanel(_WallsService, txtStatus);
+            wallsPanel.Dock = DockStyle.Fill;
+            tabWalls.Controls.Add(wallsPanel);
 
+            txtStatus.AppendText("=== ETABS Automation Plugin Loaded ===\r\n");
+            txtStatus.AppendText("Ready to use. Switch between tabs to access different features.\r\n\r\n");
         }
 
         // Button click to create sections based on user selection
