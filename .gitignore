@@ -1,3 +1,6 @@
 /.vs/
-**/obj/
 **/bin/
+/**/obj/
+*.user
+*.suo
+*.vcxproj.user
