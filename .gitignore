@@ -1,6 +1,125 @@
+# --- Keep your originals ---
 /.vs/
 **/bin/
-/**/obj/
+**/obj/
 *.user
 *.suo
 *.vcxproj.user
+**/Debug/
+
+# --- Visual Studio / MSBuild misc ---
+*.cache
+*.log
+*.tlog
+*.ilk
+*.pdb
+*.idb
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+*.ipch
+*.aps
+*.ncb
+*.sdf
+*.opensdf
+*.unsuccessfulbuild
+*.lastcodeanalysissucceeded
+
+# Solution & project user-specific
+*.userosscache
+*.sln.docstates
+
+# Build configs
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]inaries/
+[Ll]ogs/
+
+# Rider / ReSharper
+.idea/
+*.DotSettings.user
+_ReSharper*/
+*.[Rr]e[Ss]harper
+resharper-host/*
+
+# VS Code
+.vscode/
+
+# NuGet / packages
+*.nupkg
+*.snupkg
+# Old 'packages' folder (keep build/ content if present)
+**/packages/*
+!**/packages/build/
+!**/packages/repositories.config
+# NuGet locals
+.nuget/
+# Restore artifacts
+project.lock.json
+project.assets.json
+# MSBuild auto-generated
+*.metaproj
+*.metaproj.tmp
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+
+# Publish / artifacts
+**/publish/
+*.appx
+*.appxbundle
+*.appxupload
+*.msi
+*.msix
+*.msixbundle
+
+# Entity Framework / tooling
+*.jfm
+migrations/*.Designer.cs
+
+# Tooling caches
+.scannerwork/
+.sonarqube/
+.nCrunch*/
+*.ncrunchsolution
+*.ncrunchproject
+
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Optional: configuration you don’t want in git
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# ETABS / CSI model & exchange files (optional—ignore if you never version them)
+*.edb    # ETABS model
+*.e2k    # ETABS text export
+*.f2k    # SAFE/SAP text export
+*.sdb    # SAP2000 model
+*.$et
+*.$edb
+*.mdb    # old DBs sometimes used by CSI tools
+
+# Rider/JetBrains temp
+*.iml
+out/
+
+# Windows crash dumps
+*.dmp
+
+# Ref assemblies generated under obj (covered by **/obj/, but explicit for clarity)
+**/obj/**/ref/**
+**/obj/**/refint/**

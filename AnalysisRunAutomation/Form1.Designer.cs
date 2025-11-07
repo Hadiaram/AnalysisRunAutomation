@@ -48,6 +48,7 @@
             btnSetupMass = new Button();
             btnRunAnalysis = new Button();
             btnRunWorkflow = new Button();
+            btnPlaceWalls = new Button();
             txtStatus = new TextBox();
             lblStatus = new Label();
             grpMaterials.SuspendLayout();
@@ -285,7 +286,7 @@
             btnRunAnalysis.Click += btnRunAnalysis_Click;
             // 
             // btnRunWorkflow
-            // 
+            //
             btnRunWorkflow.BackColor = Color.LightBlue;
             btnRunWorkflow.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnRunWorkflow.Location = new Point(17, 623);
@@ -296,7 +297,20 @@
             btnRunWorkflow.Text = "Run Complete Workflow";
             btnRunWorkflow.UseVisualStyleBackColor = false;
             btnRunWorkflow.Click += btnRunWorkflow_Click;
-            // 
+            //
+            // btnPlaceWalls
+            //
+            btnPlaceWalls.BackColor = Color.LightCoral;
+            btnPlaceWalls.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnPlaceWalls.Location = new Point(17, 680);
+            btnPlaceWalls.Margin = new Padding(3, 4, 3, 4);
+            btnPlaceWalls.Name = "btnPlaceWalls";
+            btnPlaceWalls.Size = new Size(300, 35);
+            btnPlaceWalls.TabIndex = 14;
+            btnPlaceWalls.Text = "Place Walls";
+            btnPlaceWalls.UseVisualStyleBackColor = false;
+            btnPlaceWalls.Click += btnPlaceWalls_Click;
+            //
             // txtStatus
             // 
             txtStatus.Location = new Point(17, 723);
@@ -318,12 +332,13 @@
             lblStatus.Text = "Status:";
             // 
             // Form1
-            // 
+            //
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(340, 897);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
+            Controls.Add(btnPlaceWalls);
             Controls.Add(btnRunWorkflow);
             Controls.Add(grpSections);
             Controls.Add(grpMaterials);
@@ -366,6 +381,7 @@
         private System.Windows.Forms.CheckBox chkSlabs;
         private System.Windows.Forms.CheckBox chkWalls;
         private System.Windows.Forms.Button btnRunWorkflow;
+        private System.Windows.Forms.Button btnPlaceWalls;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;
     }

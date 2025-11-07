@@ -863,6 +863,20 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnPlaceWalls_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                WallPlacementForm wallForm = new WallPlacementForm(_SapModel);
+                wallForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"ERROR opening wall placement window: {ex.Message}\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // must include a call to finish()
