@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
+using System.Text.Json;
 using ETABSv1;
 
 namespace ETABS_Plugin
@@ -1043,12 +1045,51 @@ namespace ETABS_Plugin
                 txtStatus.AppendText("║     RESULTS EXTRACTION COMPLETE        ║\r\n");
                 txtStatus.AppendText("╚════════════════════════════════════════╝\r\n");
 
+                // ============================================
+                // EXPORT RESULTS TO JSON FILE
+                // ============================================
+                string jsonFilePath = null;
+                try
+                {
+                    // Create output directory if it doesn't exist
+                    string outputDir = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                        "ETABS_Results");
+                    Directory.CreateDirectory(outputDir);
+
+                    // Generate filename with timestamp
+                    string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    string modelName = results.ModelName ?? "UnknownModel";
+                    // Remove invalid filename characters
+                    modelName = string.Join("_", modelName.Split(Path.GetInvalidFileNameChars()));
+                    jsonFilePath = Path.Combine(outputDir, $"{modelName}_Results_{timestamp}.json");
+
+                    // Serialize to JSON with indentation for readability
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    };
+
+                    string jsonString = JsonSerializer.Serialize(results, options);
+                    File.WriteAllText(jsonFilePath, jsonString);
+
+                    txtStatus.AppendText($"\r\n✓ Results saved to JSON file:\r\n");
+                    txtStatus.AppendText($"  {jsonFilePath}\r\n");
+                }
+                catch (Exception jsonEx)
+                {
+                    txtStatus.AppendText($"\r\n⚠ Warning: Could not save JSON file:\r\n");
+                    txtStatus.AppendText($"  {jsonEx.Message}\r\n");
+                }
+
                 MessageBox.Show(
                     $"Results extracted successfully!\n\n" +
                     $"Base Reactions: {results.BaseReactions.Count}\n" +
                     $"Story Drifts: {results.StoryDrifts.Count}\n" +
                     $"Pier Forces: {results.PierForces.Count}\n" +
                     $"Modal Results: {results.ModalResults.Count}\n\n" +
+                    (jsonFilePath != null ? $"JSON saved to:\n{jsonFilePath}\n\n" : "") +
                     $"See Status window for detailed summary.",
                     "Results Extracted",
                     MessageBoxButtons.OK,
