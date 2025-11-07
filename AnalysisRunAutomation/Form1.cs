@@ -24,6 +24,7 @@ namespace ETABS_Plugin
         private LoadAssignmentManager _LoadAssignmentManager = null;
         private MassSourceManager _MassSourceManager = null;
         private AnalysisManager _AnalysisManager = null;
+        private ResultsManager _ResultsManager = null;
 
         public Form1(cSapModel SapModel, cPluginCallback Plugin)
         {
@@ -38,6 +39,7 @@ namespace ETABS_Plugin
             _LoadAssignmentManager = new LoadAssignmentManager(_SapModel);
             _MassSourceManager = new MassSourceManager(_SapModel);
             _AnalysisManager = new AnalysisManager(_SapModel);
+            _ResultsManager = new ResultsManager(_SapModel);
 
             InitializeComponent();
         }
@@ -874,6 +876,197 @@ namespace ETABS_Plugin
             {
                 txtStatus.AppendText($"ERROR opening wall placement window: {ex.Message}\r\n");
                 MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnExtractResults_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                txtStatus.Clear();
+                txtStatus.AppendText("=== EXTRACTING ANALYSIS RESULTS ===\r\n\r\n");
+
+                // Check if results are available
+                if (!_ResultsManager.AreResultsAvailable())
+                {
+                    txtStatus.AppendText("⚠ No analysis results available.\r\n");
+                    txtStatus.AppendText("Please run analysis first using the 'RUN ANALYSIS' button.\r\n");
+                    MessageBox.Show("No analysis results available. Please run analysis first.",
+                        "No Results", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText("✓ Analysis results detected.\r\n\r\n");
+
+                // Get all load cases and combinations
+                int nCases = 0;
+                string[] caseNames = Array.Empty<string>();
+                _SapModel.LoadCases.GetNameList(ref nCases, ref caseNames);
+
+                int nCombos = 0;
+                string[] comboNames = Array.Empty<string>();
+                _SapModel.RespCombo.GetNameList(ref nCombos, ref comboNames);
+
+                txtStatus.AppendText($"Found {nCases} load cases and {nCombos} load combinations.\r\n");
+                txtStatus.AppendText("Selecting all for extraction...\r\n\r\n");
+
+                // Select all cases and combos for extraction
+                _ResultsManager.SelectCasesAndCombosForOutput(caseNames, comboNames);
+
+                txtStatus.AppendText("Extracting results...\r\n");
+                txtStatus.AppendText("(This may take a moment for large models)\r\n\r\n");
+
+                // Extract all results (excluding large datasets by default)
+                var results = _ResultsManager.GetAllResults(
+                    includeModal: true,              // Include modal analysis
+                    includeAreaForces: false,        // Skip detailed area forces (very large)
+                    includeFrameForces: false,       // Skip frame forces (can be large)
+                    includeJointDisplacements: false, // Skip joint displacements (can be large)
+                    includeJointReactions: false     // Skip individual joint reactions
+                );
+
+                txtStatus.AppendText("=== EXTRACTION COMPLETE ===\r\n\r\n");
+
+                // Display summary in txtStatus
+                txtStatus.AppendText("╔════════════════════════════════════════╗\r\n");
+                txtStatus.AppendText("║       ANALYSIS RESULTS SUMMARY         ║\r\n");
+                txtStatus.AppendText("╚════════════════════════════════════════╝\r\n\r\n");
+
+                txtStatus.AppendText($"Model: {results.ModelName ?? "Unknown"}\r\n");
+                txtStatus.AppendText($"Units: {results.Units}\r\n");
+                txtStatus.AppendText($"Extracted: {results.ExtractionTime:yyyy-MM-dd HH:mm:ss}\r\n\r\n");
+
+                txtStatus.AppendText(results.GetSummary() + "\r\n\r\n");
+
+                // Show base reactions
+                if (results.BaseReactions.Any())
+                {
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+                    txtStatus.AppendText("BASE REACTIONS (First 3 cases):\r\n");
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+
+                    foreach (var reaction in results.BaseReactions.Take(3))
+                    {
+                        txtStatus.AppendText($"\n{reaction.LoadCase}:\r\n");
+                        txtStatus.AppendText($"  FZ = {reaction.FZ / 1000:F2} kN (vertical)\r\n");
+                        txtStatus.AppendText($"  FX = {reaction.FX / 1000:F2} kN\r\n");
+                        txtStatus.AppendText($"  FY = {reaction.FY / 1000:F2} kN\r\n");
+                    }
+
+                    if (results.BaseReactions.Count > 3)
+                    {
+                        txtStatus.AppendText($"\n... and {results.BaseReactions.Count - 3} more load cases\r\n");
+                    }
+                    txtStatus.AppendText("\r\n");
+                }
+
+                // Show story drifts
+                if (results.StoryDrifts.Any())
+                {
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+                    txtStatus.AppendText("STORY DRIFTS (Maximum):\r\n");
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+
+                    var maxDrift = _ResultsManager.GetMaximumDrift(results.StoryDrifts);
+                    if (maxDrift != null)
+                    {
+                        txtStatus.AppendText($"\nMaximum Drift:\r\n");
+                        txtStatus.AppendText($"  Story: {maxDrift.Story}\r\n");
+                        txtStatus.AppendText($"  Direction: {maxDrift.Direction}\r\n");
+                        txtStatus.AppendText($"  Load Case: {maxDrift.LoadCase}\r\n");
+                        txtStatus.AppendText($"  Drift Ratio: {maxDrift.Drift * 100:F4}%\r\n");
+
+                        // Check against code limit
+                        double limitPercent = 0.5; // Typical seismic limit
+                        if (maxDrift.Drift * 100 > limitPercent)
+                        {
+                            txtStatus.AppendText($"  ⚠ WARNING: Exceeds {limitPercent}% limit!\r\n");
+                        }
+                        else
+                        {
+                            txtStatus.AppendText($"  ✓ Within {limitPercent}% limit\r\n");
+                        }
+                    }
+                    txtStatus.AppendText("\r\n");
+                }
+
+                // Show pier forces summary
+                if (results.PierForces.Any())
+                {
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+                    txtStatus.AppendText($"PIER FORCES: {results.PierForces.Count} results\r\n");
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+
+                    var uniquePiers = results.PierForces.Select(p => p.PierName).Distinct().ToList();
+                    txtStatus.AppendText($"Piers analyzed: {string.Join(", ", uniquePiers.Take(5))}\r\n");
+                    if (uniquePiers.Count > 5)
+                    {
+                        txtStatus.AppendText($"... and {uniquePiers.Count - 5} more\r\n");
+                    }
+                    txtStatus.AppendText("\r\n");
+                }
+
+                // Show modal results if available
+                if (results.ModalResults.Any())
+                {
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+                    txtStatus.AppendText("MODAL ANALYSIS (First 6 modes):\r\n");
+                    txtStatus.AppendText("─────────────────────────────────────────\r\n");
+                    txtStatus.AppendText($"{"Mode",-6} {"Period(s)",-12} {"Freq(Hz)",-12} {"UX%",-8} {"UY%",-8}\r\n");
+                    txtStatus.AppendText(new string('─', 50) + "\r\n");
+
+                    foreach (var mode in results.ModalResults.Take(6))
+                    {
+                        txtStatus.AppendText($"{mode.Mode,-6} {mode.Period,-12:F4} {mode.Frequency,-12:F4} " +
+                                           $"{mode.UX * 100,-8:F2} {mode.UY * 100,-8:F2}\r\n");
+                    }
+
+                    txtStatus.AppendText("\r\n");
+
+                    // Check mass participation
+                    bool xOk = _ResultsManager.CheckMassParticipation(results.ModalResults, 0.90, "X");
+                    bool yOk = _ResultsManager.CheckMassParticipation(results.ModalResults, 0.90, "Y");
+
+                    if (!xOk || !yOk)
+                    {
+                        txtStatus.AppendText("⚠ Consider adding more modes for 90% participation\r\n");
+                    }
+                    else
+                    {
+                        txtStatus.AppendText("✓ Adequate mass participation achieved\r\n");
+                    }
+                    txtStatus.AppendText("\r\n");
+                }
+
+                txtStatus.AppendText("╔════════════════════════════════════════╗\r\n");
+                txtStatus.AppendText("║     RESULTS EXTRACTION COMPLETE        ║\r\n");
+                txtStatus.AppendText("╚════════════════════════════════════════╝\r\n");
+
+                MessageBox.Show(
+                    $"Results extracted successfully!\n\n" +
+                    $"Base Reactions: {results.BaseReactions.Count}\n" +
+                    $"Story Drifts: {results.StoryDrifts.Count}\n" +
+                    $"Pier Forces: {results.PierForces.Count}\n" +
+                    $"Modal Results: {results.ModalResults.Count}\n\n" +
+                    $"See Status window for detailed summary.",
+                    "Results Extracted",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\n✗ ERROR: {ex.Message}\r\n");
+                txtStatus.AppendText($"\r\nStack Trace:\r\n{ex.StackTrace}\r\n");
+                MessageBox.Show(
+                    $"Error extracting results:\n\n{ex.Message}\n\nCheck Status window for details.",
+                    "Extraction Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
             }
         }
 

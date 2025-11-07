@@ -47,6 +47,7 @@
             btnAssignLoads = new Button();
             btnSetupMass = new Button();
             btnRunAnalysis = new Button();
+            btnExtractResults = new Button();
             btnRunWorkflow = new Button();
             btnPlaceWalls = new Button();
             txtStatus = new TextBox();
@@ -273,7 +274,7 @@
             btnSetupMass.Click += btnSetupMass_Click;
             // 
             // btnRunAnalysis
-            // 
+            //
             btnRunAnalysis.BackColor = Color.LightGreen;
             btnRunAnalysis.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnRunAnalysis.Location = new Point(18, 325);
@@ -284,7 +285,20 @@
             btnRunAnalysis.Text = "▶ RUN ANALYSIS";
             btnRunAnalysis.UseVisualStyleBackColor = false;
             btnRunAnalysis.Click += btnRunAnalysis_Click;
-            // 
+            //
+            // btnExtractResults
+            //
+            btnExtractResults.BackColor = Color.LightYellow;
+            btnExtractResults.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnExtractResults.Location = new Point(18, 378);
+            btnExtractResults.Margin = new Padding(3, 4, 3, 4);
+            btnExtractResults.Name = "btnExtractResults";
+            btnExtractResults.Size = new Size(250, 45);
+            btnExtractResults.TabIndex = 14;
+            btnExtractResults.Text = "📊 EXTRACT RESULTS";
+            btnExtractResults.UseVisualStyleBackColor = false;
+            btnExtractResults.Click += btnExtractResults_Click;
+            //
             // btnRunWorkflow
             //
             btnRunWorkflow.BackColor = Color.LightBlue;
@@ -340,6 +354,7 @@
             Controls.Add(txtStatus);
             Controls.Add(btnPlaceWalls);
             Controls.Add(btnRunWorkflow);
+            Controls.Add(btnExtractResults);
             Controls.Add(grpSections);
             Controls.Add(grpMaterials);
             Controls.Add(lblTitle);
@@ -376,6 +391,7 @@
         private System.Windows.Forms.Button btnAssignLoads;
         private System.Windows.Forms.Button btnSetupMass;
         private System.Windows.Forms.Button btnRunAnalysis;
+        private System.Windows.Forms.Button btnExtractResults;
         private System.Windows.Forms.CheckBox chkColumns;
         private System.Windows.Forms.CheckBox chkBeams;
         private System.Windows.Forms.CheckBox chkSlabs;
