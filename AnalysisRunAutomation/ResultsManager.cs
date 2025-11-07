@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using ETABSv1;
 using ETABS_Plugin.Models;
 
@@ -150,7 +147,10 @@ namespace ETABS_Plugin
         {
             try
             {
-                int ret = _results.Setup.SetOptionMultiValuedCombo(returnComponents);
+                // Convert bool to int: true = 1, false = 0
+                int comboOption = returnComponents ? 1 : 0;
+
+                int ret = _results.Setup.SetOptionMultiValuedCombo(comboOption);
                 if (ret == 0)
                 {
                     Console.WriteLine($"✓ Multi-valued combo option set to: {(returnComponents ? "Component Results" : "Enveloped Results")}");
@@ -167,26 +167,30 @@ namespace ETABS_Plugin
         /// <summary>
         /// Check if analysis has been run and results are available
         /// </summary>
-        public bool AreResultsAvailable()
+        public bool AreResultsAvailable(params string[] mustCoverCases)
         {
-            try
-            {
-                bool runDone = false;
-                _model.Analyze.GetRunDone(ref runDone);
+            int n = 0;
+            string[] caseNames = null;
+            int[] status = null;
 
-                if (!runDone)
-                {
-                    Console.WriteLine("⚠ Analysis has not been completed or results have been cleared.");
-                }
-
-                return runDone;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error checking analysis status: {ex.Message}");
+            // 1) Query status for all load cases
+            int ret = _model.Analyze.GetCaseStatus(ref n, ref caseNames, ref status);
+            if (ret != 0 || n == 0 || caseNames == null || status == null)
                 return false;
-            }
+
+            // 2) Build a quick lookup of finished cases (status == 4)
+            var finished = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < n; i++)
+                if (status[i] == 4) finished.Add(caseNames[i]);
+
+            // 3) If the caller requires specific cases, ensure all of them are finished
+            if (mustCoverCases != null && mustCoverCases.Length > 0)
+                return mustCoverCases.All(c => finished.Contains(c));
+
+            // Otherwise: results exist if at least one case is finished
+            return finished.Count > 0;
         }
+
 
         #endregion
 
@@ -201,49 +205,74 @@ namespace ETABS_Plugin
 
             try
             {
-                int numberResults = 0;
+                int n = 0;
+
                 string[] loadCase = null;
                 string[] stepType = null;
                 double[] stepNum = null;
+
                 double[] fx = null, fy = null, fz = null;
                 double[] mx = null, my = null, mz = null;
-                double[] gx = null, gy = null, gz = null;
 
-                int ret = _results.BaseReact(
-                    ref numberResults,
-                    ref loadCase,
-                    ref stepType,
-                    ref stepNum,
+                // Scalars (NOT arrays)
+                double gx = 0, gy = 0, gz = 0;
+
+                // Per-result centroid arrays (9 arrays total)
+                double[] xCFx = null, yCFx = null, zCFx = null; // centroids contributing to FX
+                double[] xCFy = null, yCFy = null, zCFy = null; // centroids contributing to FY
+                double[] xCFz = null, yCFz = null, zCFz = null; // centroids contributing to FZ
+
+                int ret = _results.BaseReactWithCentroid(
+                    ref n,
+                    ref loadCase, ref stepType, ref stepNum,
                     ref fx, ref fy, ref fz,
                     ref mx, ref my, ref mz,
-                    ref gx, ref gy, ref gz);
+                    ref gx, ref gy, ref gz,
+                    ref xCFx, ref yCFx, ref zCFx,
+                    ref xCFy, ref yCFy, ref zCFy,
+                    ref xCFz, ref yCFz, ref zCFz
+                );
 
                 if (ret != 0)
                 {
-                    Console.WriteLine($"❌ Error retrieving base reactions. Return code: {ret}");
+                    Console.WriteLine($"❌ Error retrieving base reactions with centroid. Return code: {ret}");
                     return results;
                 }
 
-                for (int i = 0; i < numberResults; i++)
+                for (int i = 0; i < n; i++)
                 {
                     results.Add(new BaseReactionResult
                     {
                         LoadCase = loadCase[i],
                         StepType = stepType[i],
                         StepNum = stepNum[i],
+
                         FX = fx[i],
                         FY = fy[i],
                         FZ = fz[i],
                         MX = mx[i],
                         MY = my[i],
                         MZ = mz[i],
-                        OriginX = gx[i],
-                        OriginY = gy[i],
-                        OriginZ = gz[i]
+
+                        // Overall centroid of translational reactions (scalars – same for all rows)
+                        GX = gx,
+                        GY = gy,
+                        GZ = gz,
+
+                        // Per-row centroids per force component
+                        XCentroidForFX = xCFx[i],
+                        YCentroidForFX = yCFx[i],
+                        ZCentroidForFX = zCFx[i],
+                        XCentroidForFY = xCFy[i],
+                        YCentroidForFY = yCFy[i],
+                        ZCentroidForFY = zCFy[i],
+                        XCentroidForFZ = xCFz[i],
+                        YCentroidForFZ = yCFz[i],
+                        ZCentroidForFZ = zCFz[i]
                     });
                 }
 
-                Console.WriteLine($"✓ Extracted {numberResults} base reaction results");
+                Console.WriteLine($"✓ Extracted {n} base reaction results (with centroids).");
             }
             catch (Exception ex)
             {
@@ -798,7 +827,7 @@ namespace ETABS_Plugin
 
             try
             {
-                // First get modal periods
+                // --- 1) Modal periods/summary ---
                 int numberResults = 0;
                 string[] loadCase = null;
                 string[] stepType = null;
@@ -824,25 +853,32 @@ namespace ETABS_Plugin
                     return results;
                 }
 
-                // Create initial results with period data
+                // Build initial list and a lookup (case, mode) -> index
+                var indexByCaseMode = new Dictionary<(string Case, int Mode), int>((IDictionary<(string Case, int Mode), int>)StringComparer.OrdinalIgnoreCase);
                 for (int i = 0; i < numberResults; i++)
                 {
+                    int mode = (int)stepNum[i];
                     results.Add(new ModalResult
                     {
-                        Mode = (int)stepNum[i],
+                        Mode = mode,
                         LoadCase = loadCase[i],
                         Period = period[i],
                         Frequency = frequency[i],
                         CircFreq = circFreq[i],
                         Eigenvalue = eigenvalue[i]
                     });
+                    indexByCaseMode[(loadCase[i], mode)] = i;
                 }
 
-                // Now get mass participation ratios
+                // --- 2) Mass participation ratios (REQUIRES period parameter) ---
                 numberResults = 0;
                 loadCase = null;
                 stepType = null;
                 stepNum = null;
+
+                // required by signature (appears after stepNum)
+                double[] period2 = null;
+
                 double[] ux = null, uy = null, uz = null;
                 double[] sumUx = null, sumUy = null, sumUz = null;
                 double[] rx = null, ry = null, rz = null;
@@ -853,6 +889,7 @@ namespace ETABS_Plugin
                     ref loadCase,
                     ref stepType,
                     ref stepNum,
+                    ref period2,            // <-- this was missing
                     ref ux, ref uy, ref uz,
                     ref sumUx, ref sumUy, ref sumUz,
                     ref rx, ref ry, ref rz,
@@ -864,21 +901,25 @@ namespace ETABS_Plugin
                 }
                 else
                 {
-                    // Add mass participation data to existing results
-                    for (int i = 0; i < Math.Min(numberResults, results.Count); i++)
+                    // Merge by (case, mode) to be robust against ordering differences
+                    for (int i = 0; i < numberResults; i++)
                     {
-                        results[i].UX = ux[i];
-                        results[i].UY = uy[i];
-                        results[i].UZ = uz[i];
-                        results[i].RX = rx[i];
-                        results[i].RY = ry[i];
-                        results[i].RZ = rz[i];
-                        results[i].SumUX = sumUx[i];
-                        results[i].SumUY = sumUy[i];
-                        results[i].SumUZ = sumUz[i];
-                        results[i].SumRX = sumRx[i];
-                        results[i].SumRY = sumRy[i];
-                        results[i].SumRZ = sumRz[i];
+                        int mode = (int)stepNum[i];
+                        if (indexByCaseMode.TryGetValue((loadCase[i], mode), out int idx))
+                        {
+                            results[idx].UX = ux[i];
+                            results[idx].UY = uy[i];
+                            results[idx].UZ = uz[i];
+                            results[idx].RX = rx[i];
+                            results[idx].RY = ry[i];
+                            results[idx].RZ = rz[i];
+                            results[idx].SumUX = sumUx[i];
+                            results[idx].SumUY = sumUy[i];
+                            results[idx].SumUZ = sumUz[i];
+                            results[idx].SumRX = sumRx[i];
+                            results[idx].SumRY = sumRy[i];
+                            results[idx].SumRZ = sumRz[i];
+                        }
                     }
                 }
 
@@ -948,14 +989,13 @@ namespace ETABS_Plugin
 
             // Get current units
             eUnits units = eUnits.kN_m_C;
-            _model.GetPresentUnits(ref units);
+            _model.GetPresentUnits();
             allResults.Units = units.ToString().Replace("_", ", ");
 
             // Get model filename if available
             try
             {
-                string modelPath = "";
-                _model.GetModelFilename(ref modelPath);
+                string modelPath = _model.GetModelFilename(true);
                 allResults.ModelName = System.IO.Path.GetFileNameWithoutExtension(modelPath);
             }
             catch { }

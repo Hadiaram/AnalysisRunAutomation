@@ -20,6 +20,24 @@ namespace ETABS_Plugin.Models
         public double OriginX { get; set; }  // m - Point about which moments are computed
         public double OriginY { get; set; }
         public double OriginZ { get; set; }
+
+        // Overall centroid (scalars - same for all rows)
+        public double GX { get; set; }  // m - Global centroid X
+        public double GY { get; set; }  // m - Global centroid Y
+        public double GZ { get; set; }  // m - Global centroid Z
+
+        // Per-component centroids (per result row)
+        public double XCentroidForFX { get; set; }  // m - Centroid X for FX
+        public double YCentroidForFX { get; set; }  // m - Centroid Y for FX
+        public double ZCentroidForFX { get; set; }  // m - Centroid Z for FX
+
+        public double XCentroidForFY { get; set; }  // m - Centroid X for FY
+        public double YCentroidForFY { get; set; }  // m - Centroid Y for FY
+        public double ZCentroidForFY { get; set; }  // m - Centroid Z for FY
+
+        public double XCentroidForFZ { get; set; }  // m - Centroid X for FZ
+        public double YCentroidForFZ { get; set; }  // m - Centroid Y for FZ
+        public double ZCentroidForFZ { get; set; }  // m - Centroid Z for FZ
     }
 
     /// <summary>
