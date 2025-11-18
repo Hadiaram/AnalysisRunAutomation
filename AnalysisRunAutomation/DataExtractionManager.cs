@@ -871,14 +871,17 @@ namespace ETABS_Plugin
                 if (ret != 0)
                 {
                     csvData = "";
-                    report = "ERROR: Failed to retrieve modal period data from ETABS";
+                    report = "ERROR: Could not retrieve modal period data. Please ensure:\n" +
+                            "1. A modal analysis case exists in the model\n" +
+                            "2. The analysis has been run successfully\n" +
+                            "3. Modal results are available";
                     return false;
                 }
 
                 if (numResults == 0)
                 {
                     csvData = "";
-                    report = "No modal period results found in the model";
+                    report = "No modal period results found. Please run a modal analysis first.";
                     return false;
                 }
 
@@ -897,7 +900,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has modal analysis results.";
                 return false;
             }
         }
@@ -937,14 +940,17 @@ namespace ETABS_Plugin
                 if (ret != 0)
                 {
                     csvData = "";
-                    report = "ERROR: Failed to retrieve modal mass ratio data from ETABS";
+                    report = "ERROR: Could not retrieve modal mass ratio data. Please ensure:\n" +
+                            "1. A modal analysis case exists in the model\n" +
+                            "2. The analysis has been run successfully\n" +
+                            "3. Modal results are available";
                     return false;
                 }
 
                 if (numResults == 0)
                 {
                     csvData = "";
-                    report = "No modal mass ratio results found in the model";
+                    report = "No modal mass ratio results found. Please run a modal analysis first.";
                     return false;
                 }
 
@@ -965,7 +971,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has modal analysis results.";
                 return false;
             }
         }
@@ -998,14 +1004,17 @@ namespace ETABS_Plugin
                 if (ret != 0)
                 {
                     csvData = "";
-                    report = "ERROR: Failed to retrieve story drift data from ETABS";
+                    report = "ERROR: Could not retrieve story drift data. Please ensure:\n" +
+                            "1. Load cases/combinations exist in the model\n" +
+                            "2. The analysis has been run successfully\n" +
+                            "3. Story drift results are available";
                     return false;
                 }
 
                 if (numResults == 0)
                 {
                     csvData = "";
-                    report = "No story drift results found in the model";
+                    report = "No story drift results found. Please run the analysis first.";
                     return false;
                 }
 
@@ -1025,7 +1034,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has analysis results.";
                 return false;
             }
         }
@@ -1060,14 +1069,17 @@ namespace ETABS_Plugin
                 if (ret != 0)
                 {
                     csvData = "";
-                    report = "ERROR: Failed to retrieve base reaction data from ETABS";
+                    report = "ERROR: Could not retrieve base reaction data. Please ensure:\n" +
+                            "1. Load cases/combinations exist in the model\n" +
+                            "2. The analysis has been run successfully\n" +
+                            "3. Base reaction results are available";
                     return false;
                 }
 
                 if (numResults == 0)
                 {
                     csvData = "";
-                    report = "No base reaction results found in the model";
+                    report = "No base reaction results found. Please run the analysis first.";
                     return false;
                 }
 
@@ -1088,7 +1100,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has analysis results.";
                 return false;
             }
         }
@@ -1102,7 +1114,7 @@ namespace ETABS_Plugin
             {
                 cDesignCompositeColumn compositeColumn = _SapModel.DesignCompositeColumn;
 
-                // Get all frame objects
+                // First, try to get all selected objects (use empty string for all)
                 int numItems = 0;
                 string[] frameName = null;
                 eFrameDesignOrientation[] frameType = null;
@@ -1118,23 +1130,20 @@ namespace ETABS_Plugin
                 string[] vMinCombo = null;
                 double[] vMinRatio = null;
 
-                // Get summary results for all objects (use "ALL" to get all frame objects)
-                int ret = compositeColumn.GetSummaryResults("ALL", ref numItems, ref frameName,
+                // Try with empty string first (for all objects)
+                int ret = compositeColumn.GetSummaryResults("", ref numItems, ref frameName,
                     ref frameType, ref designSect, ref status, ref pmmCombo, ref pmmRatio,
                     ref pRatio, ref mMajRatio, ref mMinRatio, ref vMajCombo, ref vMajRatio,
-                    ref vMinCombo, ref vMinRatio, eItemType.Objects);
+                    ref vMinCombo, ref vMinRatio, eItemType.Group);
 
-                if (ret != 0)
+                if (ret != 0 || numItems == 0)
                 {
                     csvData = "";
-                    report = "ERROR: Failed to retrieve composite column design data from ETABS";
-                    return false;
-                }
-
-                if (numItems == 0)
-                {
-                    csvData = "";
-                    report = "No composite column design results found in the model";
+                    report = "ERROR: Could not retrieve composite column design data. Please ensure:\n" +
+                            "1. Composite columns exist in the model\n" +
+                            "2. Composite column design has been run\n" +
+                            "3. Design results are available\n\n" +
+                            "Note: Go to Design > Composite Column > Start Design/Check";
                     return false;
                 }
 
@@ -1155,7 +1164,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure composite column design has been run.";
                 return false;
             }
         }
@@ -1169,33 +1178,49 @@ namespace ETABS_Plugin
             {
                 cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                // Request material quantities table
-                string tableKey = "Material List 2 - By Object Type";
+                // Try different table keys
+                string[] tableKeysToTry = new string[]
+                {
+                    "Material List 2 - By Object Type",
+                    "Material List - By Object Type",
+                    "Material List 2",
+                    "Objects and Elements - Summary"
+                };
+
                 string[] fieldKeyList = null;  // Request all fields
                 string groupName = "";  // All groups
                 int tableVersion = 0;
                 string[] fieldsKeysIncluded = null;
                 int numRecords = 0;
                 string[] tableData = null;
+                string successfulTableKey = "";
 
-                int ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
-                    ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
-
-                if (ret != 0)
+                int ret = -1;
+                foreach (string tableKey in tableKeysToTry)
                 {
-                    csvData = "";
-                    report = "ERROR: Failed to retrieve quantities data from ETABS";
-                    return false;
+                    ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
+                        ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                    if (ret == 0 && numRecords > 0)
+                    {
+                        successfulTableKey = tableKey;
+                        break;
+                    }
                 }
 
-                if (numRecords == 0 || fieldsKeysIncluded == null || tableData == null)
+                if (ret != 0 || numRecords == 0 || fieldsKeysIncluded == null || tableData == null)
                 {
                     csvData = "";
-                    report = "No quantities data found in the model";
+                    report = "ERROR: Could not retrieve quantities data. Please ensure:\n" +
+                            "1. The model has objects (frames, areas, etc.)\n" +
+                            "2. Materials are assigned to objects\n\n" +
+                            "Tried tables: " + string.Join(", ", tableKeysToTry) + "\n\n" +
+                            "Note: You can view available tables in Display > Show Tables";
                     return false;
                 }
 
                 var csv = new StringBuilder();
+                csv.AppendLine($"# Table: {successfulTableKey}");
 
                 // Add header row
                 csv.AppendLine(string.Join(",", fieldsKeysIncluded));
@@ -1223,13 +1248,13 @@ namespace ETABS_Plugin
                 }
 
                 csvData = csv.ToString();
-                report = $"Successfully extracted quantities summary with {numRecords} records and {numFields} fields";
+                report = $"Successfully extracted '{successfulTableKey}' with {numRecords} records and {numFields} fields";
                 return true;
             }
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has objects with material assignments.";
                 return false;
             }
         }
