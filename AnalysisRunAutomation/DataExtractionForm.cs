@@ -738,6 +738,124 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnExtractCompositeColumnDesign_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Extracting composite column design results (DCR and PMM ratios)...\r\n");
+
+                // Extract data
+                if (!_ExtractionManager.ExtractCompositeColumnDesign(out string csvData, out string report))
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                    MessageBox.Show(report, "Extraction Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText($"{report}\r\n");
+
+                // Save dialog
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Title = "Save Composite Column Design Results",
+                    FileName = "CompositeColumnDesign.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    {
+                        txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
+                        MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText($"Save failed: {error}\r\n\r\n");
+                        MessageBox.Show($"Failed to save file:\n{error}",
+                            "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void btnExtractQuantitiesSummary_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Extracting quantities summary...\r\n");
+
+                // Extract data
+                if (!_ExtractionManager.ExtractQuantitiesSummary(out string csvData, out string report))
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                    MessageBox.Show(report, "Extraction Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText($"{report}\r\n");
+
+                // Save dialog
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Title = "Save Quantities Summary",
+                    FileName = "QuantitiesSummary.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    {
+                        txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
+                        MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText($"Save failed: {error}\r\n\r\n");
+                        MessageBox.Show($"Failed to save file:\n{error}",
+                            "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
         private void btnClearStatus_Click(object sender, EventArgs e)
         {
             txtStatus.Clear();

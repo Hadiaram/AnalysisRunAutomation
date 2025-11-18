@@ -42,6 +42,8 @@ namespace ETABS_Plugin
             btnExtractModalMassRatios = new System.Windows.Forms.Button();
             btnExtractStoryDrifts = new System.Windows.Forms.Button();
             btnExtractBaseShear = new System.Windows.Forms.Button();
+            btnExtractCompositeColumnDesign = new System.Windows.Forms.Button();
+            btnExtractQuantitiesSummary = new System.Windows.Forms.Button();
             lblPlaceholder = new System.Windows.Forms.Label();
             txtStatus = new System.Windows.Forms.TextBox();
             lblStatus = new System.Windows.Forms.Label();
@@ -73,10 +75,12 @@ namespace ETABS_Plugin
             grpExtractionOptions.Controls.Add(btnExtractModalMassRatios);
             grpExtractionOptions.Controls.Add(btnExtractStoryDrifts);
             grpExtractionOptions.Controls.Add(btnExtractBaseShear);
+            grpExtractionOptions.Controls.Add(btnExtractCompositeColumnDesign);
+            grpExtractionOptions.Controls.Add(btnExtractQuantitiesSummary);
             grpExtractionOptions.Controls.Add(lblPlaceholder);
             grpExtractionOptions.Location = new System.Drawing.Point(12, 42);
             grpExtractionOptions.Name = "grpExtractionOptions";
-            grpExtractionOptions.Size = new System.Drawing.Size(460, 620);
+            grpExtractionOptions.Size = new System.Drawing.Size(460, 720);
             grpExtractionOptions.TabIndex = 1;
             grpExtractionOptions.TabStop = false;
             grpExtractionOptions.Text = "Extraction Options";
@@ -225,6 +229,30 @@ namespace ETABS_Plugin
             btnExtractBaseShear.UseVisualStyleBackColor = false;
             btnExtractBaseShear.Click += btnExtractBaseShear_Click;
             //
+            // btnExtractCompositeColumnDesign
+            //
+            btnExtractCompositeColumnDesign.BackColor = System.Drawing.Color.LightYellow;
+            btnExtractCompositeColumnDesign.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btnExtractCompositeColumnDesign.Location = new System.Drawing.Point(15, 630);
+            btnExtractCompositeColumnDesign.Name = "btnExtractCompositeColumnDesign";
+            btnExtractCompositeColumnDesign.Size = new System.Drawing.Size(430, 40);
+            btnExtractCompositeColumnDesign.TabIndex = 17;
+            btnExtractCompositeColumnDesign.Text = "Extract Composite Column Design (DCR & PMM Ratios)";
+            btnExtractCompositeColumnDesign.UseVisualStyleBackColor = false;
+            btnExtractCompositeColumnDesign.Click += btnExtractCompositeColumnDesign_Click;
+            //
+            // btnExtractQuantitiesSummary
+            //
+            btnExtractQuantitiesSummary.BackColor = System.Drawing.Color.LightSalmon;
+            btnExtractQuantitiesSummary.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btnExtractQuantitiesSummary.Location = new System.Drawing.Point(15, 680);
+            btnExtractQuantitiesSummary.Name = "btnExtractQuantitiesSummary";
+            btnExtractQuantitiesSummary.Size = new System.Drawing.Size(430, 40);
+            btnExtractQuantitiesSummary.TabIndex = 18;
+            btnExtractQuantitiesSummary.Text = "Extract Quantities Summary (Materials)";
+            btnExtractQuantitiesSummary.UseVisualStyleBackColor = false;
+            btnExtractQuantitiesSummary.Click += btnExtractQuantitiesSummary_Click;
+            //
             // lblPlaceholder
             //
             lblPlaceholder.AutoSize = true;
@@ -237,7 +265,7 @@ namespace ETABS_Plugin
             //
             // txtStatus
             //
-            txtStatus.Location = new System.Drawing.Point(12, 693);
+            txtStatus.Location = new System.Drawing.Point(12, 793);
             txtStatus.Multiline = true;
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
@@ -248,7 +276,7 @@ namespace ETABS_Plugin
             // lblStatus
             //
             lblStatus.AutoSize = true;
-            lblStatus.Location = new System.Drawing.Point(12, 675);
+            lblStatus.Location = new System.Drawing.Point(12, 775);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new System.Drawing.Size(42, 15);
             lblStatus.TabIndex = 3;
@@ -256,7 +284,7 @@ namespace ETABS_Plugin
             //
             // btnClearStatus
             //
-            btnClearStatus.Location = new System.Drawing.Point(390, 670);
+            btnClearStatus.Location = new System.Drawing.Point(390, 770);
             btnClearStatus.Name = "btnClearStatus";
             btnClearStatus.Size = new System.Drawing.Size(82, 23);
             btnClearStatus.TabIndex = 4;
@@ -268,7 +296,7 @@ namespace ETABS_Plugin
             //
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(484, 905);
+            ClientSize = new System.Drawing.Size(484, 1005);
             Controls.Add(btnClearStatus);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
@@ -302,6 +330,8 @@ namespace ETABS_Plugin
         private System.Windows.Forms.Button btnExtractModalMassRatios;
         private System.Windows.Forms.Button btnExtractStoryDrifts;
         private System.Windows.Forms.Button btnExtractBaseShear;
+        private System.Windows.Forms.Button btnExtractCompositeColumnDesign;
+        private System.Windows.Forms.Button btnExtractQuantitiesSummary;
         private System.Windows.Forms.Label lblPlaceholder;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;

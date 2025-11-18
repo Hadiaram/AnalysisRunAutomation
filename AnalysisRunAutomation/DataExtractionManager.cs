@@ -1093,6 +1093,147 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Extracts composite column design summary results (DCR and PMM ratios)
+        /// </summary>
+        public bool ExtractCompositeColumnDesign(out string csvData, out string report)
+        {
+            try
+            {
+                cDesignCompositeColumn compositeColumn = _SapModel.DesignCompositeColumn;
+
+                // Get all frame objects
+                int numItems = 0;
+                string[] frameName = null;
+                eFrameDesignOrientation[] frameType = null;
+                string[] designSect = null;
+                string[] status = null;
+                string[] pmmCombo = null;
+                double[] pmmRatio = null;
+                double[] pRatio = null;
+                double[] mMajRatio = null;
+                double[] mMinRatio = null;
+                string[] vMajCombo = null;
+                double[] vMajRatio = null;
+                string[] vMinCombo = null;
+                double[] vMinRatio = null;
+
+                // Get summary results for all objects (use "ALL" to get all frame objects)
+                int ret = compositeColumn.GetSummaryResults("ALL", ref numItems, ref frameName,
+                    ref frameType, ref designSect, ref status, ref pmmCombo, ref pmmRatio,
+                    ref pRatio, ref mMajRatio, ref mMinRatio, ref vMajCombo, ref vMajRatio,
+                    ref vMinCombo, ref vMinRatio, eItemType.Objects);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to retrieve composite column design data from ETABS";
+                    return false;
+                }
+
+                if (numItems == 0)
+                {
+                    csvData = "";
+                    report = "No composite column design results found in the model";
+                    return false;
+                }
+
+                var csv = new StringBuilder();
+                csv.AppendLine("FrameName,FrameType,DesignSection,Status,PMMCombo,PMMRatio,PRatio,MMajRatio,MMinRatio,VMajCombo,VMajRatio,VMinCombo,VMinRatio");
+
+                for (int i = 0; i < numItems; i++)
+                {
+                    csv.AppendLine($"{frameName[i]},{frameType[i]},{designSect[i]},{status[i]}," +
+                        $"{pmmCombo[i]},{pmmRatio[i]},{pRatio[i]},{mMajRatio[i]},{mMinRatio[i]}," +
+                        $"{vMajCombo[i]},{vMajRatio[i]},{vMinCombo[i]},{vMinRatio[i]}");
+                }
+
+                csvData = csv.ToString();
+                report = $"Successfully extracted composite column design results for {numItems} frame objects";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts quantities summary using database tables
+        /// </summary>
+        public bool ExtractQuantitiesSummary(out string csvData, out string report)
+        {
+            try
+            {
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
+
+                // Request material quantities table
+                string tableKey = "Material List 2 - By Object Type";
+                string[] fieldKeyList = null;  // Request all fields
+                string groupName = "";  // All groups
+                int tableVersion = 0;
+                string[] fieldsKeysIncluded = null;
+                int numRecords = 0;
+                string[] tableData = null;
+
+                int ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
+                    ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to retrieve quantities data from ETABS";
+                    return false;
+                }
+
+                if (numRecords == 0 || fieldsKeysIncluded == null || tableData == null)
+                {
+                    csvData = "";
+                    report = "No quantities data found in the model";
+                    return false;
+                }
+
+                var csv = new StringBuilder();
+
+                // Add header row
+                csv.AppendLine(string.Join(",", fieldsKeysIncluded));
+
+                // Add data rows
+                int numFields = fieldsKeysIncluded.Length;
+                for (int i = 0; i < numRecords; i++)
+                {
+                    var rowData = new List<string>();
+                    for (int j = 0; j < numFields; j++)
+                    {
+                        int index = i * numFields + j;
+                        if (index < tableData.Length)
+                        {
+                            // Escape commas in data
+                            string value = tableData[index];
+                            if (value.Contains(","))
+                            {
+                                value = $"\"{value}\"";
+                            }
+                            rowData.Add(value);
+                        }
+                    }
+                    csv.AppendLine(string.Join(",", rowData));
+                }
+
+                csvData = csv.ToString();
+                report = $"Successfully extracted quantities summary with {numRecords} records and {numFields} fields";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Helper Methods
