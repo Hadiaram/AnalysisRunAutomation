@@ -34,6 +34,8 @@ namespace ETABS_Plugin
             btnExtractProjectInfo = new System.Windows.Forms.Button();
             btnExtractStoryInfo = new System.Windows.Forms.Button();
             btnExtractGridInfo = new System.Windows.Forms.Button();
+            btnExtractFrameModifiers = new System.Windows.Forms.Button();
+            btnExtractAreaModifiers = new System.Windows.Forms.Button();
             lblPlaceholder = new System.Windows.Forms.Label();
             txtStatus = new System.Windows.Forms.TextBox();
             lblStatus = new System.Windows.Forms.Label();
@@ -57,6 +59,8 @@ namespace ETABS_Plugin
             grpExtractionOptions.Controls.Add(btnExtractProjectInfo);
             grpExtractionOptions.Controls.Add(btnExtractStoryInfo);
             grpExtractionOptions.Controls.Add(btnExtractGridInfo);
+            grpExtractionOptions.Controls.Add(btnExtractFrameModifiers);
+            grpExtractionOptions.Controls.Add(btnExtractAreaModifiers);
             grpExtractionOptions.Controls.Add(lblPlaceholder);
             grpExtractionOptions.Location = new System.Drawing.Point(12, 42);
             grpExtractionOptions.Name = "grpExtractionOptions";
@@ -113,15 +117,39 @@ namespace ETABS_Plugin
             btnExtractGridInfo.UseVisualStyleBackColor = false;
             btnExtractGridInfo.Click += btnExtractGridInfo_Click;
             //
+            // btnExtractFrameModifiers
+            //
+            btnExtractFrameModifiers.BackColor = System.Drawing.Color.LightSalmon;
+            btnExtractFrameModifiers.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btnExtractFrameModifiers.Location = new System.Drawing.Point(15, 230);
+            btnExtractFrameModifiers.Name = "btnExtractFrameModifiers";
+            btnExtractFrameModifiers.Size = new System.Drawing.Size(430, 40);
+            btnExtractFrameModifiers.TabIndex = 8;
+            btnExtractFrameModifiers.Text = "Extract Frame Property Modifiers";
+            btnExtractFrameModifiers.UseVisualStyleBackColor = false;
+            btnExtractFrameModifiers.Click += btnExtractFrameModifiers_Click;
+            //
+            // btnExtractAreaModifiers
+            //
+            btnExtractAreaModifiers.BackColor = System.Drawing.Color.LightPink;
+            btnExtractAreaModifiers.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btnExtractAreaModifiers.Location = new System.Drawing.Point(15, 280);
+            btnExtractAreaModifiers.Name = "btnExtractAreaModifiers";
+            btnExtractAreaModifiers.Size = new System.Drawing.Size(430, 40);
+            btnExtractAreaModifiers.TabIndex = 9;
+            btnExtractAreaModifiers.Text = "Extract Area Property Modifiers";
+            btnExtractAreaModifiers.UseVisualStyleBackColor = false;
+            btnExtractAreaModifiers.Click += btnExtractAreaModifiers_Click;
+            //
             // lblPlaceholder
             //
             lblPlaceholder.AutoSize = true;
             lblPlaceholder.ForeColor = System.Drawing.Color.Gray;
-            lblPlaceholder.Location = new System.Drawing.Point(15, 235);
+            lblPlaceholder.Location = new System.Drawing.Point(15, 285);
             lblPlaceholder.Name = "lblPlaceholder";
-            lblPlaceholder.Size = new System.Drawing.Size(297, 15);
-            lblPlaceholder.TabIndex = 7;
-            lblPlaceholder.Text = "Additional extraction options will be added here...";
+            lblPlaceholder.Size = new System.Drawing.Size(0, 15);
+            lblPlaceholder.TabIndex = 10;
+            lblPlaceholder.Visible = false;
             //
             // txtStatus
             //
@@ -182,6 +210,8 @@ namespace ETABS_Plugin
         private System.Windows.Forms.Button btnExtractProjectInfo;
         private System.Windows.Forms.Button btnExtractStoryInfo;
         private System.Windows.Forms.Button btnExtractGridInfo;
+        private System.Windows.Forms.Button btnExtractFrameModifiers;
+        private System.Windows.Forms.Button btnExtractAreaModifiers;
         private System.Windows.Forms.Label lblPlaceholder;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;

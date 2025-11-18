@@ -422,6 +422,176 @@ namespace ETABS_Plugin
 
         #endregion
 
+        #region Stiffness Modifiers Extraction
+
+        /// <summary>
+        /// Extracts frame property stiffness modifiers
+        /// </summary>
+        public bool ExtractFrameModifiers(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting frame property modifiers...\r\n");
+
+                // Get list of frame property names
+                int numberNames = 0;
+                string[] propNames = Array.Empty<string>();
+
+                int ret = _SapModel.PropFrame.GetNameList(ref numberNames, ref propNames);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = $"ERROR: PropFrame.GetNameList() returned error code {ret}";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numberNames} frame propert(ies)");
+
+                // CSV Header
+                sb.AppendLine("PropertyName,Area,Shear2,Shear3,Torsion,I22,I33,Mass,Weight");
+
+                // Extract modifiers for each frame property
+                int successCount = 0;
+                for (int i = 0; i < numberNames; i++)
+                {
+                    string propName = propNames[i];
+                    double[] modifiers = new double[8];
+
+                    ret = _SapModel.PropFrame.GetModifiers(propName, ref modifiers);
+
+                    if (ret == 0)
+                    {
+                        sb.AppendLine($"\"{propName}\"," +
+                            $"{modifiers[0]:0.0000}," +  // Area
+                            $"{modifiers[1]:0.0000}," +  // Shear2
+                            $"{modifiers[2]:0.0000}," +  // Shear3
+                            $"{modifiers[3]:0.0000}," +  // Torsion
+                            $"{modifiers[4]:0.0000}," +  // I22
+                            $"{modifiers[5]:0.0000}," +  // I33
+                            $"{modifiers[6]:0.0000}," +  // Mass
+                            $"{modifiers[7]:0.0000}");   // Weight
+                        successCount++;
+                    }
+                    else
+                    {
+                        reportSb.AppendLine($"⚠ Warning: Failed to get modifiers for '{propName}' (error {ret})");
+                    }
+                }
+
+                reportSb.AppendLine($"✓ Successfully extracted {successCount} of {numberNames} frame properties");
+
+                if (successCount > 0)
+                {
+                    reportSb.AppendLine("\r\n✓ Frame modifiers extracted successfully");
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                else
+                {
+                    csvData = "";
+                    report = reportSb.ToString() + "\r\n✗ No frame modifiers were successfully extracted";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts area property stiffness modifiers
+        /// </summary>
+        public bool ExtractAreaModifiers(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting area property modifiers...\r\n");
+
+                // Get list of area property names
+                int numberNames = 0;
+                string[] propNames = Array.Empty<string>();
+
+                int ret = _SapModel.PropArea.GetNameList(ref numberNames, ref propNames);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = $"ERROR: PropArea.GetNameList() returned error code {ret}";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numberNames} area propert(ies)");
+
+                // CSV Header
+                sb.AppendLine("PropertyName,Membrane_f11,Membrane_f22,Membrane_f12,Bending_m11,Bending_m22,Bending_m12,Shear_v13,Shear_v23,Mass,Weight");
+
+                // Extract modifiers for each area property
+                int successCount = 0;
+                for (int i = 0; i < numberNames; i++)
+                {
+                    string propName = propNames[i];
+                    double[] modifiers = new double[10];
+
+                    ret = _SapModel.PropArea.GetModifiers(propName, ref modifiers);
+
+                    if (ret == 0)
+                    {
+                        sb.AppendLine($"\"{propName}\"," +
+                            $"{modifiers[0]:0.0000}," +  // Membrane f11
+                            $"{modifiers[1]:0.0000}," +  // Membrane f22
+                            $"{modifiers[2]:0.0000}," +  // Membrane f12
+                            $"{modifiers[3]:0.0000}," +  // Bending m11
+                            $"{modifiers[4]:0.0000}," +  // Bending m22
+                            $"{modifiers[5]:0.0000}," +  // Bending m12
+                            $"{modifiers[6]:0.0000}," +  // Shear v13
+                            $"{modifiers[7]:0.0000}," +  // Shear v23
+                            $"{modifiers[8]:0.0000}," +  // Mass
+                            $"{modifiers[9]:0.0000}");   // Weight
+                        successCount++;
+                    }
+                    else
+                    {
+                        reportSb.AppendLine($"⚠ Warning: Failed to get modifiers for '{propName}' (error {ret})");
+                    }
+                }
+
+                reportSb.AppendLine($"✓ Successfully extracted {successCount} of {numberNames} area properties");
+
+                if (successCount > 0)
+                {
+                    reportSb.AppendLine("\r\n✓ Area modifiers extracted successfully");
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                else
+                {
+                    csvData = "";
+                    report = reportSb.ToString() + "\r\n✗ No area modifiers were successfully extracted";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
