@@ -82,6 +82,66 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnExtractProjectInfo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                txtStatus.AppendText("=== EXTRACTING PROJECT/MODEL INFORMATION ===\r\n");
+
+                // Extract data
+                if (_ExtractionManager.ExtractProjectInfo(out string csvData, out string report))
+                {
+                    txtStatus.AppendText(report);
+
+                    // Ask user where to save
+                    using (SaveFileDialog saveDialog = new SaveFileDialog())
+                    {
+                        saveDialog.Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*";
+                        saveDialog.DefaultExt = "csv";
+                        saveDialog.FileName = $"ProjectInfo_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                        saveDialog.Title = "Save Project Information";
+
+                        if (saveDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                            {
+                                txtStatus.AppendText($"✓ Data saved to: {saveDialog.FileName}\r\n\r\n");
+                                MessageBox.Show($"Project information extracted successfully!\n\nSaved to:\n{saveDialog.FileName}",
+                                    "Extraction Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                txtStatus.AppendText($"✗ Error saving file: {error}\r\n\r\n");
+                                MessageBox.Show($"Error saving file:\n{error}", "Save Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                        else
+                        {
+                            txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                        }
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText(report);
+                    MessageBox.Show("Failed to extract project information. Check status for details.", "Extraction Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
         // Placeholder for future extraction methods
         // Add more extraction button handlers here as needed
 

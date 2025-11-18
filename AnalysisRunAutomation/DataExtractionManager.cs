@@ -159,6 +159,101 @@ namespace ETABS_Plugin
 
         #endregion
 
+        #region Project/Model Information Extraction
+
+        /// <summary>
+        /// Extracts project and model information including filename and units
+        /// </summary>
+        public bool ExtractProjectInfo(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting project/model information...\r\n");
+
+                // Get model filename with full path
+                string filenameWithPath = _SapModel.GetModelFilename(true);
+                string filenameOnly = _SapModel.GetModelFilename(false);
+
+                // Get present units
+                eUnits units = _SapModel.GetPresentUnits();
+                string unitsString = GetUnitsDescription(units);
+
+                reportSb.AppendLine($"✓ Model Filename: {filenameOnly}");
+                reportSb.AppendLine($"✓ Full Path: {filenameWithPath}");
+                reportSb.AppendLine($"✓ Current Units: {unitsString}");
+
+                // CSV Header
+                sb.AppendLine("Property,Value");
+                sb.AppendLine($"Model Filename,\"{filenameOnly}\"");
+                sb.AppendLine($"Full Path,\"{filenameWithPath}\"");
+                sb.AppendLine($"Current Units,{unitsString}");
+                sb.AppendLine($"Units Enum Value,{(int)units}");
+
+                // Add timestamp
+                sb.AppendLine($"Extraction Date,{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+
+                reportSb.AppendLine("\r\n✓ Project information extracted successfully");
+                csvData = sb.ToString();
+                report = reportSb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Converts eUnits enum to readable description
+        /// </summary>
+        private string GetUnitsDescription(eUnits units)
+        {
+            switch (units)
+            {
+                case eUnits.lb_in_F:
+                    return "lb_in_F (Pound-Inch-Fahrenheit)";
+                case eUnits.lb_ft_F:
+                    return "lb_ft_F (Pound-Foot-Fahrenheit)";
+                case eUnits.kip_in_F:
+                    return "kip_in_F (Kip-Inch-Fahrenheit)";
+                case eUnits.kip_ft_F:
+                    return "kip_ft_F (Kip-Foot-Fahrenheit)";
+                case eUnits.kN_mm_C:
+                    return "kN_mm_C (Kilonewton-Millimeter-Celsius)";
+                case eUnits.kN_m_C:
+                    return "kN_m_C (Kilonewton-Meter-Celsius)";
+                case eUnits.kgf_mm_C:
+                    return "kgf_mm_C (Kilogram-Force-Millimeter-Celsius)";
+                case eUnits.kgf_m_C:
+                    return "kgf_m_C (Kilogram-Force-Meter-Celsius)";
+                case eUnits.N_mm_C:
+                    return "N_mm_C (Newton-Millimeter-Celsius)";
+                case eUnits.N_m_C:
+                    return "N_m_C (Newton-Meter-Celsius)";
+                case eUnits.Ton_mm_C:
+                    return "Ton_mm_C (Metric Ton-Millimeter-Celsius)";
+                case eUnits.Ton_m_C:
+                    return "Ton_m_C (Metric Ton-Meter-Celsius)";
+                case eUnits.kN_cm_C:
+                    return "kN_cm_C (Kilonewton-Centimeter-Celsius)";
+                case eUnits.kgf_cm_C:
+                    return "kgf_cm_C (Kilogram-Force-Centimeter-Celsius)";
+                case eUnits.N_cm_C:
+                    return "N_cm_C (Newton-Centimeter-Celsius)";
+                case eUnits.Ton_cm_C:
+                    return "Ton_cm_C (Metric Ton-Centimeter-Celsius)";
+                default:
+                    return $"Unknown ({(int)units})";
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
