@@ -20,6 +20,37 @@ namespace ETABS_Plugin
         {
             txtStatus.AppendText("Data Extraction Window Ready\r\n");
             txtStatus.AppendText("Click extraction buttons to extract and save data\r\n\r\n");
+            txtStatus.AppendText("TIP: Click 'Run Model Diagnostics' to see what data is available\r\n\r\n");
+        }
+
+        private void btnRunDiagnostics_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Running model diagnostics...\r\n\r\n");
+
+                if (_ExtractionManager.RunModelDiagnostics(out string report))
+                {
+                    txtStatus.AppendText(report);
+                    txtStatus.AppendText("\r\n");
+                }
+                else
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
         }
 
         private void btnExtractBaseReactions_Click(object sender, EventArgs e)

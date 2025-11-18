@@ -1259,6 +1259,193 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Runs diagnostics to check what data is available in the model
+        /// </summary>
+        public bool RunModelDiagnostics(out string report)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== ETABS MODEL DIAGNOSTICS ===\n");
+
+            try
+            {
+                // Check load cases
+                sb.AppendLine("--- LOAD CASES ---");
+                int numLoadCases = 0;
+                string[] loadCaseNames = null;
+                _SapModel.LoadCases.GetNameList(ref numLoadCases, ref loadCaseNames);
+                sb.AppendLine($"Total Load Cases: {numLoadCases}");
+                if (numLoadCases > 0)
+                {
+                    for (int i = 0; i < Math.Min(10, numLoadCases); i++)
+                    {
+                        sb.AppendLine($"  - {loadCaseNames[i]}");
+                    }
+                    if (numLoadCases > 10)
+                        sb.AppendLine($"  ... and {numLoadCases - 10} more");
+                }
+                sb.AppendLine();
+
+                // Check load combinations
+                sb.AppendLine("--- LOAD COMBINATIONS ---");
+                int numCombos = 0;
+                string[] comboNames = null;
+                _SapModel.RespCombo.GetNameList(ref numCombos, ref comboNames);
+                sb.AppendLine($"Total Load Combinations: {numCombos}");
+                if (numCombos > 0)
+                {
+                    for (int i = 0; i < Math.Min(5, numCombos); i++)
+                    {
+                        sb.AppendLine($"  - {comboNames[i]}");
+                    }
+                    if (numCombos > 5)
+                        sb.AppendLine($"  ... and {numCombos - 5} more");
+                }
+                sb.AppendLine();
+
+                // Check stories
+                sb.AppendLine("--- STORIES ---");
+                int numStories = 0;
+                string[] storyNames = null;
+                double[] storyElevations = null;
+                double[] storyHeights = null;
+                bool[] isMasterStory = null;
+                string[] similarToStory = null;
+                bool[] spliceAbove = null;
+                double[] spliceHeight = null;
+                _SapModel.Story.GetStories(ref numStories, ref storyNames, ref storyElevations,
+                    ref storyHeights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+                sb.AppendLine($"Total Stories: {numStories}");
+                if (numStories > 0)
+                {
+                    for (int i = 0; i < numStories; i++)
+                    {
+                        sb.AppendLine($"  - {storyNames[i]} (Elevation: {storyElevations[i]})");
+                    }
+                }
+                sb.AppendLine();
+
+                // Check frame objects
+                sb.AppendLine("--- FRAME OBJECTS (Columns/Beams) ---");
+                int numFrames = 0;
+                string[] frameNames = null;
+                _SapModel.FrameObj.GetNameList(ref numFrames, ref frameNames);
+                sb.AppendLine($"Total Frame Objects: {numFrames}");
+                sb.AppendLine();
+
+                // Check area objects
+                sb.AppendLine("--- AREA OBJECTS (Walls/Slabs) ---");
+                int numAreas = 0;
+                string[] areaNames = null;
+                _SapModel.AreaObj.GetNameList(ref numAreas, ref areaNames);
+                sb.AppendLine($"Total Area Objects: {numAreas}");
+                sb.AppendLine();
+
+                // Check for modal load cases specifically
+                sb.AppendLine("--- MODAL ANALYSIS CASES ---");
+                int modalCount = 0;
+                if (numLoadCases > 0)
+                {
+                    for (int i = 0; i < numLoadCases; i++)
+                    {
+                        eLoadCaseType caseType = eLoadCaseType.LinearStatic;
+                        int subType = 0;
+                        _SapModel.LoadCases.GetTypeOAPI_1(loadCaseNames[i], ref caseType, ref subType);
+                        if (caseType == eLoadCaseType.Modal)
+                        {
+                            modalCount++;
+                            sb.AppendLine($"  - {loadCaseNames[i]} (Modal)");
+                        }
+                    }
+                }
+                if (modalCount == 0)
+                {
+                    sb.AppendLine("  NO MODAL ANALYSIS CASES FOUND");
+                    sb.AppendLine("  (This is why modal extraction is failing)");
+                }
+                sb.AppendLine();
+
+                // Check analysis results availability
+                sb.AppendLine("--- ANALYSIS RESULTS ---");
+                try
+                {
+                    int numResults = 0;
+                    string[] lc = null;
+                    string[] st = null;
+                    double[] sn = null;
+                    double[] fx = null, fy = null, fz = null, mx = null, my = null, mz = null;
+                    double gx = 0, gy = 0, gz = 0;
+
+                    int ret = _SapModel.Results.BaseReact(ref numResults, ref lc, ref st, ref sn,
+                        ref fx, ref fy, ref fz, ref mx, ref my, ref mz, ref gx, ref gy, ref gz);
+
+                    if (ret == 0 && numResults > 0)
+                    {
+                        sb.AppendLine($"✓ Analysis results available ({numResults} result sets)");
+                    }
+                    else
+                    {
+                        sb.AppendLine("✗ NO ANALYSIS RESULTS FOUND");
+                        sb.AppendLine("  Please run: Analyze > Run Analysis");
+                    }
+                }
+                catch
+                {
+                    sb.AppendLine("✗ Could not check analysis results");
+                }
+                sb.AppendLine();
+
+                // Check available database tables
+                sb.AppendLine("--- AVAILABLE DATABASE TABLES ---");
+                try
+                {
+                    string[] tableKeys = new string[]
+                    {
+                        "Material List 2 - By Object Type",
+                        "Objects and Elements - Summary",
+                        "Connectivity - Frame",
+                        "Connectivity - Area"
+                    };
+
+                    foreach (string tableKey in tableKeys)
+                    {
+                        string[] fkl = null;
+                        int tv = 0;
+                        string[] fki = null;
+                        int nr = 0;
+                        string[] td = null;
+
+                        int ret = _SapModel.DatabaseTables.GetTableForDisplayArray(tableKey, ref fkl, "",
+                            ref tv, ref fki, ref nr, ref td);
+
+                        if (ret == 0 && nr > 0)
+                        {
+                            sb.AppendLine($"  ✓ {tableKey} ({nr} records)");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"  ✗ {tableKey} (not available)");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.AppendLine($"  Error checking tables: {ex.Message}");
+                }
+                sb.AppendLine();
+
+                sb.AppendLine("=== END DIAGNOSTICS ===");
+
+                report = sb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                report = $"ERROR running diagnostics: {ex.Message}";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Helper Methods
