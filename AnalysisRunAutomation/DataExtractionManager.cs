@@ -592,6 +592,263 @@ namespace ETABS_Plugin
 
         #endregion
 
+        #region Element Geometry and Location Extraction
+
+        /// <summary>
+        /// Extracts wall/shear wall elements with dimensions and location
+        /// </summary>
+        public bool ExtractWallElements(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting wall element information...\r\n");
+
+                // Get all area objects
+                int numberNames = 0;
+                string[] names = Array.Empty<string>();
+                string[] labels = Array.Empty<string>();
+                string[] stories = Array.Empty<string>();
+
+                int ret = _SapModel.AreaObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = $"ERROR: AreaObj.GetLabelNameList() returned error code {ret}";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numberNames} area object(s)");
+
+                // CSV Header
+                sb.AppendLine("Name,Label,Story,PropertyName,Thickness(mm),CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
+
+                // Extract data for each area object
+                int wallCount = 0;
+                for (int i = 0; i < numberNames; i++)
+                {
+                    string name = names[i];
+                    string label = labels[i];
+                    string story = stories[i];
+
+                    // Get property
+                    string propName = "";
+                    ret = _SapModel.AreaObj.GetProperty(name, ref propName);
+                    if (ret != 0 || string.IsNullOrEmpty(propName)) continue;
+
+                    // Check if it's a wall property
+                    eWallPropType wallPropType = eWallPropType.Specified;
+                    eShellType shellType = eShellType.ShellThin;
+                    string matProp = "";
+                    double thickness = 0;
+                    int color = 0;
+                    string notes = "";
+                    string guid = "";
+
+                    ret = _SapModel.PropArea.GetWall(propName, ref wallPropType, ref shellType,
+                        ref matProp, ref thickness, ref color, ref notes, ref guid);
+
+                    if (ret != 0) continue; // Not a wall, skip
+
+                    // Get points
+                    int numPoints = 0;
+                    string[] points = Array.Empty<string>();
+                    ret = _SapModel.AreaObj.GetPoints(name, ref numPoints, ref points);
+                    if (ret != 0 || numPoints == 0) continue;
+
+                    // Get coordinates of all points
+                    double sumX = 0, sumY = 0, sumZ = 0;
+                    double minX = double.MaxValue, maxX = double.MinValue;
+                    double minY = double.MaxValue, maxY = double.MinValue;
+
+                    for (int j = 0; j < numPoints; j++)
+                    {
+                        double x = 0, y = 0, z = 0;
+                        ret = _SapModel.PointObj.GetCoordCartesian(points[j], ref x, ref y, ref z);
+                        if (ret == 0)
+                        {
+                            sumX += x;
+                            sumY += y;
+                            sumZ += z;
+                            minX = Math.Min(minX, x);
+                            maxX = Math.Max(maxX, x);
+                            minY = Math.Min(minY, y);
+                            maxY = Math.Max(maxY, y);
+                        }
+                    }
+
+                    // Calculate centroid
+                    double centroidX = sumX / numPoints;
+                    double centroidY = sumY / numPoints;
+                    double centroidZ = sumZ / numPoints;
+
+                    // Convert thickness to mm
+                    double thicknessMm = thickness * 1000;
+
+                    sb.AppendLine($"\"{name}\",\"{label}\",\"{story}\",\"{propName}\"," +
+                        $"{thicknessMm:0.00}," +
+                        $"{centroidX:0.0000},{centroidY:0.0000},{centroidZ:0.0000}," +
+                        $"{minX:0.0000},{maxX:0.0000},{minY:0.0000},{maxY:0.0000}");
+                    wallCount++;
+                }
+
+                reportSb.AppendLine($"✓ Successfully extracted {wallCount} wall element(s)");
+
+                if (wallCount > 0)
+                {
+                    reportSb.AppendLine("\r\n✓ Wall elements extracted successfully");
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                else
+                {
+                    csvData = "";
+                    report = reportSb.ToString() + "\r\n✗ No wall elements found";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts column elements with dimensions and location
+        /// </summary>
+        public bool ExtractColumnElements(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting column element information...\r\n");
+
+                // Get all frame objects
+                int numberNames = 0;
+                string[] names = Array.Empty<string>();
+                string[] labels = Array.Empty<string>();
+                string[] stories = Array.Empty<string>();
+
+                int ret = _SapModel.FrameObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = $"ERROR: FrameObj.GetLabelNameList() returned error code {ret}";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numberNames} frame object(s)");
+
+                // CSV Header
+                sb.AppendLine("Name,Label,Story,SectionName,Width_T2(mm),Depth_T3(mm),BottomX,BottomY,BottomZ,TopX,TopY,TopZ,Length(m)");
+
+                // Extract data for each frame object (filter for columns)
+                int columnCount = 0;
+                for (int i = 0; i < numberNames; i++)
+                {
+                    string name = names[i];
+                    string label = labels[i];
+                    string story = stories[i];
+
+                    // Get section
+                    string propName = "";
+                    string sAuto = "";
+                    ret = _SapModel.FrameObj.GetSection(name, ref propName, ref sAuto);
+                    if (ret != 0 || string.IsNullOrEmpty(propName)) continue;
+
+                    // Try to get rectangular section properties
+                    string fileName = "";
+                    string matProp = "";
+                    double t3 = 0; // depth
+                    double t2 = 0; // width
+                    int color = 0;
+                    string notes = "";
+                    string guid = "";
+
+                    ret = _SapModel.PropFrame.GetRectangle(propName, ref fileName, ref matProp,
+                        ref t3, ref t2, ref color, ref notes, ref guid);
+
+                    // If not rectangular, try to get basic info (we'll skip non-rectangular for now)
+                    if (ret != 0) continue;
+
+                    // Get end points
+                    string point1 = "";
+                    string point2 = "";
+                    ret = _SapModel.FrameObj.GetPoints(name, ref point1, ref point2);
+                    if (ret != 0) continue;
+
+                    // Get coordinates
+                    double x1 = 0, y1 = 0, z1 = 0;
+                    double x2 = 0, y2 = 0, z2 = 0;
+
+                    ret = _SapModel.PointObj.GetCoordCartesian(point1, ref x1, ref y1, ref z1);
+                    if (ret != 0) continue;
+
+                    ret = _SapModel.PointObj.GetCoordCartesian(point2, ref x2, ref y2, ref z2);
+                    if (ret != 0) continue;
+
+                    // Calculate length
+                    double length = Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2) + Math.Pow(z2 - z1, 2));
+
+                    // Filter for vertical elements (columns) - check if primarily vertical
+                    double verticalRatio = Math.Abs(z2 - z1) / length;
+                    if (verticalRatio < 0.7) continue; // Skip if not primarily vertical
+
+                    // Use bottom point (lower Z)
+                    double bottomX = z1 < z2 ? x1 : x2;
+                    double bottomY = z1 < z2 ? y1 : y2;
+                    double bottomZ = Math.Min(z1, z2);
+                    double topX = z1 > z2 ? x1 : x2;
+                    double topY = z1 > z2 ? y1 : y2;
+                    double topZ = Math.Max(z1, z2);
+
+                    // Convert dimensions to mm
+                    double t2Mm = t2 * 1000;
+                    double t3Mm = t3 * 1000;
+
+                    sb.AppendLine($"\"{name}\",\"{label}\",\"{story}\",\"{propName}\"," +
+                        $"{t2Mm:0.00},{t3Mm:0.00}," +
+                        $"{bottomX:0.0000},{bottomY:0.0000},{bottomZ:0.0000}," +
+                        $"{topX:0.0000},{topY:0.0000},{topZ:0.0000}," +
+                        $"{length:0.0000}");
+                    columnCount++;
+                }
+
+                reportSb.AppendLine($"✓ Successfully extracted {columnCount} column element(s)");
+
+                if (columnCount > 0)
+                {
+                    reportSb.AppendLine("\r\n✓ Column elements extracted successfully");
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                else
+                {
+                    csvData = "";
+                    report = reportSb.ToString() + "\r\n✗ No column elements found";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
