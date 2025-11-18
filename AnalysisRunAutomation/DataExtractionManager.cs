@@ -1350,7 +1350,7 @@ namespace ETABS_Plugin
                     {
                         eLoadCaseType caseType = eLoadCaseType.LinearStatic;
                         int subType = 0;
-                        _SapModel.LoadCases.GetTypeOAPI_1(loadCaseNames[i], ref caseType, ref subType);
+                        _SapModel.LoadCases.GetTypeOAPI(loadCaseNames[i], ref caseType, ref subType);
                         if (caseType == eLoadCaseType.Modal)
                         {
                             modalCount++;
