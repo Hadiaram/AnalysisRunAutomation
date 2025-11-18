@@ -1369,44 +1369,97 @@ namespace ETABS_Plugin
                 sb.AppendLine("--- ANALYSIS RESULTS ---");
                 try
                 {
-                    int numResults = 0;
-                    string[] lc = null;
-                    string[] st = null;
-                    double[] sn = null;
-                    double[] fx = null, fy = null, fz = null, mx = null, my = null, mz = null;
-                    double gx = 0, gy = 0, gz = 0;
-
-                    int ret = _SapModel.Results.BaseReact(ref numResults, ref lc, ref st, ref sn,
-                        ref fx, ref fy, ref fz, ref mx, ref my, ref mz, ref gx, ref gy, ref gz);
-
-                    if (ret == 0 && numResults > 0)
+                    // First, try to setup all case/combo output
+                    try
                     {
-                        sb.AppendLine($"✓ Analysis results available ({numResults} result sets)");
+                        _SapModel.Results.Setup.DeselectAllCasesAndCombosForOutput();
+                        _SapModel.Results.Setup.SetCaseSelectedForOutput("MODAL");
+                    }
+                    catch { }
+
+                    // Try multiple result checks
+                    bool hasResults = false;
+                    int totalResults = 0;
+
+                    // Check 1: Base reactions
+                    try
+                    {
+                        int numResults = 0;
+                        string[] lc = null, st = null;
+                        double[] sn = null, fx = null, fy = null, fz = null, mx = null, my = null, mz = null;
+                        double gx = 0, gy = 0, gz = 0;
+
+                        int ret = _SapModel.Results.BaseReact(ref numResults, ref lc, ref st, ref sn,
+                            ref fx, ref fy, ref fz, ref mx, ref my, ref mz, ref gx, ref gy, ref gz);
+
+                        if (ret == 0 && numResults > 0)
+                        {
+                            sb.AppendLine($"  ✓ Base reactions available ({numResults} load cases)");
+                            hasResults = true;
+                            totalResults += numResults;
+                        }
+                    }
+                    catch { }
+
+                    // Check 2: Modal periods
+                    try
+                    {
+                        int numResults = 0;
+                        string[] lc = null, st = null;
+                        double[] sn = null, period = null, freq = null, circFreq = null, eigenValue = null;
+
+                        int ret = _SapModel.Results.ModalPeriod(ref numResults, ref lc, ref st,
+                            ref sn, ref period, ref freq, ref circFreq, ref eigenValue);
+
+                        if (ret == 0 && numResults > 0)
+                        {
+                            sb.AppendLine($"  ✓ Modal results available ({numResults} modes)");
+                            hasResults = true;
+                            totalResults += numResults;
+                        }
+                    }
+                    catch { }
+
+                    if (!hasResults)
+                    {
+                        sb.AppendLine("  ✗ NO ANALYSIS RESULTS FOUND");
+                        sb.AppendLine("  ");
+                        sb.AppendLine("  Possible reasons:");
+                        sb.AppendLine("  1. Analysis has not been run yet");
+                        sb.AppendLine("  2. Analysis failed (check ETABS analysis log)");
+                        sb.AppendLine("  3. Model is locked (File > Unlock Model)");
+                        sb.AppendLine("  ");
+                        sb.AppendLine("  Try: Analyze > Run Analysis in ETABS");
                     }
                     else
                     {
-                        sb.AppendLine("✗ NO ANALYSIS RESULTS FOUND");
-                        sb.AppendLine("  Please run: Analyze > Run Analysis");
+                        sb.AppendLine($"  ");
+                        sb.AppendLine($"  ✓ ANALYSIS RESULTS AVAILABLE");
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    sb.AppendLine("✗ Could not check analysis results");
+                    sb.AppendLine($"  ✗ Could not check results: {ex.Message}");
                 }
                 sb.AppendLine();
 
                 // Check available database tables
                 sb.AppendLine("--- AVAILABLE DATABASE TABLES ---");
+                sb.AppendLine("  NOTE: Database tables are generated automatically by ETABS");
+                sb.AppendLine("  They should be available once the model has objects/materials");
+                sb.AppendLine();
                 try
                 {
                     string[] tableKeys = new string[]
                     {
                         "Material List 2 - By Object Type",
+                        "Material List 2 - Material Properties",
                         "Objects and Elements - Summary",
                         "Connectivity - Frame",
                         "Connectivity - Area"
                     };
 
+                    int availableCount = 0;
                     foreach (string tableKey in tableKeys)
                     {
                         string[] fkl = null;
@@ -1421,11 +1474,20 @@ namespace ETABS_Plugin
                         if (ret == 0 && nr > 0)
                         {
                             sb.AppendLine($"  ✓ {tableKey} ({nr} records)");
+                            availableCount++;
                         }
                         else
                         {
                             sb.AppendLine($"  ✗ {tableKey} (not available)");
                         }
+                    }
+
+                    if (availableCount == 0)
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine("  If ALL tables show 'not available', this is usually because:");
+                        sb.AppendLine("  - ETABS table names may differ in this version");
+                        sb.AppendLine("  - You can view actual table names via Display > Show Tables in ETABS");
                     }
                 }
                 catch (Exception ex)
