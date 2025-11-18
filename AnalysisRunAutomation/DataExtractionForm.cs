@@ -502,8 +502,241 @@ namespace ETABS_Plugin
             }
         }
 
-        // Placeholder for future extraction methods
-        // Add more extraction button handlers here as needed
+        private void btnExtractModalPeriods_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Extracting modal periods...\r\n");
+
+                // Extract data
+                if (!extractionManager.ExtractModalPeriods(out string csvData, out string report))
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                    MessageBox.Show(report, "Extraction Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText($"{report}\r\n");
+
+                // Save dialog
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Title = "Save Modal Periods",
+                    FileName = "ModalPeriods.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    {
+                        txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
+                        MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText($"Save failed: {error}\r\n\r\n");
+                        MessageBox.Show($"Failed to save file:\n{error}",
+                            "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void btnExtractModalMassRatios_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Extracting modal participating mass ratios...\r\n");
+
+                // Extract data
+                if (!extractionManager.ExtractModalMassRatios(out string csvData, out string report))
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                    MessageBox.Show(report, "Extraction Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText($"{report}\r\n");
+
+                // Save dialog
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Title = "Save Modal Mass Ratios",
+                    FileName = "ModalMassRatios.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    {
+                        txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
+                        MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText($"Save failed: {error}\r\n\r\n");
+                        MessageBox.Show($"Failed to save file:\n{error}",
+                            "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void btnExtractStoryDrifts_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Extracting story drifts...\r\n");
+
+                // Extract data
+                if (!extractionManager.ExtractStoryDrifts(out string csvData, out string report))
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                    MessageBox.Show(report, "Extraction Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText($"{report}\r\n");
+
+                // Save dialog
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Title = "Save Story Drifts",
+                    FileName = "StoryDrifts.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    {
+                        txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
+                        MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText($"Save failed: {error}\r\n\r\n");
+                        MessageBox.Show($"Failed to save file:\n{error}",
+                            "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void btnExtractBaseShear_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                txtStatus.AppendText("Extracting base shear/reactions...\r\n");
+
+                // Extract data
+                if (!extractionManager.ExtractBaseShear(out string csvData, out string report))
+                {
+                    txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                    MessageBox.Show(report, "Extraction Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                txtStatus.AppendText($"{report}\r\n");
+
+                // Save dialog
+                SaveFileDialog saveDialog = new SaveFileDialog
+                {
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Title = "Save Base Shear/Reactions",
+                    FileName = "BaseShear.csv"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    {
+                        txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
+                        MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText($"Save failed: {error}\r\n\r\n");
+                        MessageBox.Show($"Failed to save file:\n{error}",
+                            "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText("Save cancelled by user\r\n\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
 
         private void btnClearStatus_Click(object sender, EventArgs e)
         {

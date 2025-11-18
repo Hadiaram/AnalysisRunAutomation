@@ -847,6 +847,252 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Extracts modal periods and frequencies
+        /// </summary>
+        public bool ExtractModalPeriods(out string csvData, out string report)
+        {
+            try
+            {
+                cAnalysisResults results = model.Results;
+
+                int numResults = 0;
+                string[] loadCase = null;
+                string[] stepType = null;
+                double[] stepNum = null;
+                double[] period = null;
+                double[] frequency = null;
+                double[] circFreq = null;
+                double[] eigenValue = null;
+
+                int ret = results.ModalPeriod(ref numResults, ref loadCase, ref stepType,
+                    ref stepNum, ref period, ref frequency, ref circFreq, ref eigenValue);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to retrieve modal period data from ETABS";
+                    return false;
+                }
+
+                if (numResults == 0)
+                {
+                    csvData = "";
+                    report = "No modal period results found in the model";
+                    return false;
+                }
+
+                var csv = new StringBuilder();
+                csv.AppendLine("LoadCase,StepType,ModeNumber,Period(s),Frequency(1/s),CircularFreq(rad/s),EigenValue(rad²/s²)");
+
+                for (int i = 0; i < numResults; i++)
+                {
+                    csv.AppendLine($"{loadCase[i]},{stepType[i]},{stepNum[i]},{period[i]},{frequency[i]},{circFreq[i]},{eigenValue[i]}");
+                }
+
+                csvData = csv.ToString();
+                report = $"Successfully extracted modal periods for {numResults} modes";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts modal participating mass ratios
+        /// </summary>
+        public bool ExtractModalMassRatios(out string csvData, out string report)
+        {
+            try
+            {
+                cAnalysisResults results = model.Results;
+
+                int numResults = 0;
+                string[] loadCase = null;
+                string[] stepType = null;
+                double[] stepNum = null;
+                double[] period = null;
+                double[] ux = null;
+                double[] uy = null;
+                double[] uz = null;
+                double[] sumUX = null;
+                double[] sumUY = null;
+                double[] sumUZ = null;
+                double[] rx = null;
+                double[] ry = null;
+                double[] rz = null;
+                double[] sumRX = null;
+                double[] sumRY = null;
+                double[] sumRZ = null;
+
+                int ret = results.ModalParticipatingMassRatios(ref numResults, ref loadCase,
+                    ref stepType, ref stepNum, ref period, ref ux, ref uy, ref uz,
+                    ref sumUX, ref sumUY, ref sumUZ, ref rx, ref ry, ref rz,
+                    ref sumRX, ref sumRY, ref sumRZ);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to retrieve modal mass ratio data from ETABS";
+                    return false;
+                }
+
+                if (numResults == 0)
+                {
+                    csvData = "";
+                    report = "No modal mass ratio results found in the model";
+                    return false;
+                }
+
+                var csv = new StringBuilder();
+                csv.AppendLine("LoadCase,StepType,ModeNumber,Period(s),UX,UY,UZ,SumUX,SumUY,SumUZ,RX,RY,RZ,SumRX,SumRY,SumRZ");
+
+                for (int i = 0; i < numResults; i++)
+                {
+                    csv.AppendLine($"{loadCase[i]},{stepType[i]},{stepNum[i]},{period[i]}," +
+                        $"{ux[i]},{uy[i]},{uz[i]},{sumUX[i]},{sumUY[i]},{sumUZ[i]}," +
+                        $"{rx[i]},{ry[i]},{rz[i]},{sumRX[i]},{sumRY[i]},{sumRZ[i]}");
+                }
+
+                csvData = csv.ToString();
+                report = $"Successfully extracted modal mass ratios for {numResults} modes";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts story drift results
+        /// </summary>
+        public bool ExtractStoryDrifts(out string csvData, out string report)
+        {
+            try
+            {
+                cAnalysisResults results = model.Results;
+
+                int numResults = 0;
+                string[] story = null;
+                string[] loadCase = null;
+                string[] stepType = null;
+                double[] stepNum = null;
+                string[] direction = null;
+                double[] drift = null;
+                string[] label = null;
+                double[] x = null;
+                double[] y = null;
+                double[] z = null;
+
+                int ret = results.StoryDrifts(ref numResults, ref story, ref loadCase,
+                    ref stepType, ref stepNum, ref direction, ref drift, ref label,
+                    ref x, ref y, ref z);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to retrieve story drift data from ETABS";
+                    return false;
+                }
+
+                if (numResults == 0)
+                {
+                    csvData = "";
+                    report = "No story drift results found in the model";
+                    return false;
+                }
+
+                var csv = new StringBuilder();
+                csv.AppendLine("Story,LoadCase,StepType,StepNum,Direction,Drift,PointLabel,X,Y,Z");
+
+                for (int i = 0; i < numResults; i++)
+                {
+                    csv.AppendLine($"{story[i]},{loadCase[i]},{stepType[i]},{stepNum[i]}," +
+                        $"{direction[i]},{drift[i]},{label[i]},{x[i]},{y[i]},{z[i]}");
+                }
+
+                csvData = csv.ToString();
+                report = $"Successfully extracted story drifts for {numResults} results";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts base shear (base reactions) for all load cases
+        /// </summary>
+        public bool ExtractBaseShear(out string csvData, out string report)
+        {
+            try
+            {
+                cAnalysisResults results = model.Results;
+
+                int numResults = 0;
+                string[] loadCase = null;
+                string[] stepType = null;
+                double[] stepNum = null;
+                double[] fx = null;
+                double[] fy = null;
+                double[] fz = null;
+                double[] mx = null;
+                double[] my = null;
+                double[] mz = null;
+                double gx = 0;
+                double gy = 0;
+                double gz = 0;
+
+                int ret = results.BaseReact(ref numResults, ref loadCase, ref stepType,
+                    ref stepNum, ref fx, ref fy, ref fz, ref mx, ref my, ref mz,
+                    ref gx, ref gy, ref gz);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to retrieve base reaction data from ETABS";
+                    return false;
+                }
+
+                if (numResults == 0)
+                {
+                    csvData = "";
+                    report = "No base reaction results found in the model";
+                    return false;
+                }
+
+                var csv = new StringBuilder();
+                csv.AppendLine($"Global Point: X={gx}, Y={gy}, Z={gz}");
+                csv.AppendLine("LoadCase,StepType,StepNum,FX,FY,FZ,MX,MY,MZ");
+
+                for (int i = 0; i < numResults; i++)
+                {
+                    csv.AppendLine($"{loadCase[i]},{stepType[i]},{stepNum[i]}," +
+                        $"{fx[i]},{fy[i]},{fz[i]},{mx[i]},{my[i]},{mz[i]}");
+                }
+
+                csvData = csv.ToString();
+                report = $"Successfully extracted base reactions for {numResults} load cases";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Helper Methods
