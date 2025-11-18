@@ -33,6 +33,7 @@ namespace ETABS_Plugin
             btnExtractBaseReactions = new System.Windows.Forms.Button();
             btnExtractProjectInfo = new System.Windows.Forms.Button();
             btnExtractStoryInfo = new System.Windows.Forms.Button();
+            btnExtractGridInfo = new System.Windows.Forms.Button();
             lblPlaceholder = new System.Windows.Forms.Label();
             txtStatus = new System.Windows.Forms.TextBox();
             lblStatus = new System.Windows.Forms.Label();
@@ -55,6 +56,7 @@ namespace ETABS_Plugin
             grpExtractionOptions.Controls.Add(btnExtractBaseReactions);
             grpExtractionOptions.Controls.Add(btnExtractProjectInfo);
             grpExtractionOptions.Controls.Add(btnExtractStoryInfo);
+            grpExtractionOptions.Controls.Add(btnExtractGridInfo);
             grpExtractionOptions.Controls.Add(lblPlaceholder);
             grpExtractionOptions.Location = new System.Drawing.Point(12, 42);
             grpExtractionOptions.Name = "grpExtractionOptions";
@@ -99,14 +101,26 @@ namespace ETABS_Plugin
             btnExtractStoryInfo.UseVisualStyleBackColor = false;
             btnExtractStoryInfo.Click += btnExtractStoryInfo_Click;
             //
+            // btnExtractGridInfo
+            //
+            btnExtractGridInfo.BackColor = System.Drawing.Color.LightGreen;
+            btnExtractGridInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btnExtractGridInfo.Location = new System.Drawing.Point(15, 180);
+            btnExtractGridInfo.Name = "btnExtractGridInfo";
+            btnExtractGridInfo.Size = new System.Drawing.Size(430, 40);
+            btnExtractGridInfo.TabIndex = 6;
+            btnExtractGridInfo.Text = "Extract Grid System Information";
+            btnExtractGridInfo.UseVisualStyleBackColor = false;
+            btnExtractGridInfo.Click += btnExtractGridInfo_Click;
+            //
             // lblPlaceholder
             //
             lblPlaceholder.AutoSize = true;
             lblPlaceholder.ForeColor = System.Drawing.Color.Gray;
-            lblPlaceholder.Location = new System.Drawing.Point(15, 185);
+            lblPlaceholder.Location = new System.Drawing.Point(15, 235);
             lblPlaceholder.Name = "lblPlaceholder";
             lblPlaceholder.Size = new System.Drawing.Size(297, 15);
-            lblPlaceholder.TabIndex = 5;
+            lblPlaceholder.TabIndex = 7;
             lblPlaceholder.Text = "Additional extraction options will be added here...";
             //
             // txtStatus
@@ -167,6 +181,7 @@ namespace ETABS_Plugin
         private System.Windows.Forms.Button btnExtractBaseReactions;
         private System.Windows.Forms.Button btnExtractProjectInfo;
         private System.Windows.Forms.Button btnExtractStoryInfo;
+        private System.Windows.Forms.Button btnExtractGridInfo;
         private System.Windows.Forms.Label lblPlaceholder;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;

@@ -342,6 +342,86 @@ namespace ETABS_Plugin
 
         #endregion
 
+        #region Grid System Information Extraction
+
+        /// <summary>
+        /// Extracts all grid system information including origin coordinates and rotation
+        /// </summary>
+        public bool ExtractGridInfo(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting grid system information...\r\n");
+
+                // Get list of grid system names
+                int numberNames = 0;
+                string[] gridNames = Array.Empty<string>();
+
+                int ret = _SapModel.GridSys.GetNameList(ref numberNames, ref gridNames);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = $"ERROR: GridSys.GetNameList() returned error code {ret}";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numberNames} grid system(s)");
+
+                // CSV Header
+                sb.AppendLine("GridSystemName,OriginX,OriginY,RotationZ(deg)");
+
+                // Extract data for each grid system
+                int successCount = 0;
+                for (int i = 0; i < numberNames; i++)
+                {
+                    string gridName = gridNames[i];
+                    double x = 0;
+                    double y = 0;
+                    double rz = 0;
+
+                    ret = _SapModel.GridSys.GetGridSys(gridName, ref x, ref y, ref rz);
+
+                    if (ret == 0)
+                    {
+                        sb.AppendLine($"\"{gridName}\",{x:0.0000},{y:0.0000},{rz:0.0000}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        reportSb.AppendLine($"⚠ Warning: Failed to get data for grid system '{gridName}' (error {ret})");
+                    }
+                }
+
+                reportSb.AppendLine($"✓ Successfully extracted {successCount} of {numberNames} grid system(s)");
+
+                if (successCount > 0)
+                {
+                    reportSb.AppendLine("\r\n✓ Grid system information extracted successfully");
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                else
+                {
+                    csvData = "";
+                    report = reportSb.ToString() + "\r\n✗ No grid systems were successfully extracted";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
