@@ -254,6 +254,94 @@ namespace ETABS_Plugin
 
         #endregion
 
+        #region Story/Level Information Extraction
+
+        /// <summary>
+        /// Extracts all story information including names, elevations, heights, and properties
+        /// </summary>
+        public bool ExtractStoryInfo(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting story/level information...\r\n");
+
+                // Get story data
+                int numberStories = 0;
+                string[] storyNames = Array.Empty<string>();
+                double[] storyElevations = Array.Empty<double>();
+                double[] storyHeights = Array.Empty<double>();
+                bool[] isMasterStory = Array.Empty<bool>();
+                string[] similarToStory = Array.Empty<string>();
+                bool[] spliceAbove = Array.Empty<bool>();
+                double[] spliceHeight = Array.Empty<double>();
+
+                int ret = _SapModel.Story.GetStories(
+                    ref numberStories,
+                    ref storyNames,
+                    ref storyElevations,
+                    ref storyHeights,
+                    ref isMasterStory,
+                    ref similarToStory,
+                    ref spliceAbove,
+                    ref spliceHeight);
+
+                if (ret != 0)
+                {
+                    csvData = "";
+                    report = $"ERROR: Story.GetStories() returned error code {ret}";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numberStories} stories (plus Base level)");
+                reportSb.AppendLine($"✓ Total entries: {storyNames.Length}");
+
+                // CSV Header
+                sb.AppendLine("StoryName,Elevation,Height,IsMasterStory,SimilarToStory,SpliceAbove,SpliceHeight");
+
+                // Export each story
+                for (int i = 0; i < storyNames.Length; i++)
+                {
+                    string name = storyNames[i];
+                    double elevation = storyElevations[i];
+                    double height = storyHeights[i];
+                    bool isMaster = isMasterStory[i];
+                    string similarTo = similarToStory[i];
+                    bool splice = spliceAbove[i];
+                    double spliceHt = spliceHeight[i];
+
+                    sb.AppendLine($"\"{name}\",{elevation:0.0000},{height:0.0000}," +
+                        $"{isMaster},{(string.IsNullOrEmpty(similarTo) ? "N/A" : similarTo)}," +
+                        $"{splice},{spliceHt:0.0000}");
+                }
+
+                reportSb.AppendLine($"\r\nStory range:");
+                if (storyNames.Length > 0)
+                {
+                    reportSb.AppendLine($"  Base: {storyElevations[0]:0.00}");
+                    if (storyNames.Length > 1)
+                    {
+                        reportSb.AppendLine($"  Top Story: {storyNames[storyNames.Length - 1]} at {storyElevations[storyNames.Length - 1]:0.00}");
+                    }
+                }
+
+                reportSb.AppendLine("\r\n✓ Story information extracted successfully");
+                csvData = sb.ToString();
+                report = reportSb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
