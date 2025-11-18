@@ -511,7 +511,7 @@ namespace ETABS_Plugin
                 txtStatus.AppendText("Extracting modal periods...\r\n");
 
                 // Extract data
-                if (!extractionManager.ExtractModalPeriods(out string csvData, out string report))
+                if (!_ExtractionManager.ExtractModalPeriods(out string csvData, out string report))
                 {
                     txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
                     MessageBox.Show(report, "Extraction Failed",
@@ -531,7 +531,7 @@ namespace ETABS_Plugin
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
-                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
                     {
                         txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
                         MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
@@ -570,7 +570,7 @@ namespace ETABS_Plugin
                 txtStatus.AppendText("Extracting modal participating mass ratios...\r\n");
 
                 // Extract data
-                if (!extractionManager.ExtractModalMassRatios(out string csvData, out string report))
+                if (!_ExtractionManager.ExtractModalMassRatios(out string csvData, out string report))
                 {
                     txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
                     MessageBox.Show(report, "Extraction Failed",
@@ -590,7 +590,7 @@ namespace ETABS_Plugin
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
-                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
                     {
                         txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
                         MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
@@ -629,7 +629,7 @@ namespace ETABS_Plugin
                 txtStatus.AppendText("Extracting story drifts...\r\n");
 
                 // Extract data
-                if (!extractionManager.ExtractStoryDrifts(out string csvData, out string report))
+                if (!_ExtractionManager.ExtractStoryDrifts(out string csvData, out string report))
                 {
                     txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
                     MessageBox.Show(report, "Extraction Failed",
@@ -649,7 +649,7 @@ namespace ETABS_Plugin
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
-                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
                     {
                         txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
                         MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",
@@ -688,7 +688,7 @@ namespace ETABS_Plugin
                 txtStatus.AppendText("Extracting base shear/reactions...\r\n");
 
                 // Extract data
-                if (!extractionManager.ExtractBaseShear(out string csvData, out string report))
+                if (!_ExtractionManager.ExtractBaseShear(out string csvData, out string report))
                 {
                     txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
                     MessageBox.Show(report, "Extraction Failed",
@@ -708,7 +708,7 @@ namespace ETABS_Plugin
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
-                    if (extractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
+                    if (_ExtractionManager.SaveToFile(csvData, saveDialog.FileName, out string error))
                     {
                         txtStatus.AppendText($"Saved to: {saveDialog.FileName}\r\n\r\n");
                         MessageBox.Show($"Data saved successfully to:\n{saveDialog.FileName}",

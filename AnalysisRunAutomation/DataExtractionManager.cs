@@ -854,7 +854,7 @@ namespace ETABS_Plugin
         {
             try
             {
-                cAnalysisResults results = model.Results;
+                cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
                 string[] loadCase = null;
@@ -909,7 +909,7 @@ namespace ETABS_Plugin
         {
             try
             {
-                cAnalysisResults results = model.Results;
+                cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
                 string[] loadCase = null;
@@ -977,7 +977,7 @@ namespace ETABS_Plugin
         {
             try
             {
-                cAnalysisResults results = model.Results;
+                cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
                 string[] story = null;
@@ -1037,7 +1037,7 @@ namespace ETABS_Plugin
         {
             try
             {
-                cAnalysisResults results = model.Results;
+                cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
                 string[] loadCase = null;
