@@ -877,6 +877,20 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnExtractData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DataExtractionForm extractionForm = new DataExtractionForm(_SapModel);
+                extractionForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"ERROR opening data extraction window: {ex.Message}\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // must include a call to finish()
