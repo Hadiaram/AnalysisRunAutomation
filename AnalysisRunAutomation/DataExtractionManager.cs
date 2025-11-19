@@ -1508,6 +1508,347 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Extracts all available data types to a specified folder
+        /// </summary>
+        public bool ExtractAllData(string outputFolder, out string report)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== EXTRACTING ALL DATA ===\n");
+
+            int successCount = 0;
+            int failCount = 0;
+            int skipCount = 0;
+
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+
+            try
+            {
+                // 1. Base Reactions
+                sb.AppendLine("1. Base Reactions...");
+                if (ExtractBaseReactions(out string csvData, out string result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"BaseReactions_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 2. Project Info
+                sb.AppendLine("2. Project/Model Information...");
+                if (ExtractProjectInfo(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"ProjectInfo_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 3. Story Info
+                sb.AppendLine("3. Story/Level Information...");
+                if (ExtractStoryInfo(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"StoryInfo_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 4. Grid Info
+                sb.AppendLine("4. Grid System Information...");
+                if (ExtractGridInfo(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"GridInfo_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 5. Frame Modifiers
+                sb.AppendLine("5. Frame Property Modifiers...");
+                if (ExtractFrameModifiers(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"FrameModifiers_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 6. Area Modifiers
+                sb.AppendLine("6. Area Property Modifiers...");
+                if (ExtractAreaModifiers(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"AreaModifiers_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 7. Wall Elements
+                sb.AppendLine("7. Wall Elements...");
+                if (ExtractWallElements(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"WallElements_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 8. Column Elements
+                sb.AppendLine("8. Column Elements...");
+                if (ExtractColumnElements(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"ColumnElements_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 9. Modal Periods
+                sb.AppendLine("9. Modal Periods...");
+                if (ExtractModalPeriods(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"ModalPeriods_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 10. Modal Mass Ratios
+                sb.AppendLine("10. Modal Participating Mass Ratios...");
+                if (ExtractModalMassRatios(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"ModalMassRatios_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 11. Story Drifts
+                sb.AppendLine("11. Story Drifts...");
+                if (ExtractStoryDrifts(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"StoryDrifts_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 12. Base Shear
+                sb.AppendLine("12. Base Shear...");
+                if (ExtractBaseShear(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"BaseShear_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ✗ {result}");
+                    failCount++;
+                }
+
+                // 13. Composite Column Design (might not apply)
+                sb.AppendLine("13. Composite Column Design...");
+                if (ExtractCompositeColumnDesign(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"CompositeColumnDesign_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (not applicable to this model)");
+                    skipCount++;
+                }
+
+                // 14. Quantities Summary (might not work due to table names)
+                sb.AppendLine("14. Quantities Summary...");
+                if (ExtractQuantitiesSummary(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"QuantitiesSummary_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (database table names may differ in this ETABS version)");
+                    skipCount++;
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("=== SUMMARY ===");
+                sb.AppendLine($"✓ Success: {successCount} files");
+                sb.AppendLine($"✗ Failed: {failCount} extractions");
+                sb.AppendLine($"⊘ Skipped: {skipCount} (not applicable)");
+                sb.AppendLine($"\nAll files saved to: {outputFolder}");
+
+                report = sb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                report = sb.ToString() + $"\n\nFATAL ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Helper Methods

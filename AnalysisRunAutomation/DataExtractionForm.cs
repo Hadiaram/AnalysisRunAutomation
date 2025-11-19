@@ -53,6 +53,55 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnExtractAll_Click(object sender, EventArgs e)
+        {
+            Cursor = Cursors.WaitCursor;
+
+            try
+            {
+                // Ask user to select output folder
+                using (var folderDialog = new FolderBrowserDialog())
+                {
+                    folderDialog.Description = "Select folder to save all extracted data";
+                    folderDialog.ShowNewFolderButton = true;
+
+                    if (folderDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        txtStatus.AppendText($"Extracting all data to: {folderDialog.SelectedPath}\r\n\r\n");
+
+                        if (_ExtractionManager.ExtractAllData(folderDialog.SelectedPath, out string report))
+                        {
+                            txtStatus.AppendText(report);
+                            txtStatus.AppendText("\r\n");
+
+                            MessageBox.Show($"Extraction complete!\n\nFiles saved to:\n{folderDialog.SelectedPath}",
+                                "Extract All Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            txtStatus.AppendText($"FAILED: {report}\r\n\r\n");
+                            MessageBox.Show("Extraction completed with errors. Check status window for details.",
+                                "Extract All - Some Errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                    else
+                    {
+                        txtStatus.AppendText("Extract All cancelled by user\r\n\r\n");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nEXCEPTION: {ex.Message}\r\n\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
         private void btnExtractBaseReactions_Click(object sender, EventArgs e)
         {
             try
