@@ -31,6 +31,7 @@ namespace ETABS_Plugin
             lblTitle = new System.Windows.Forms.Label();
             grpExtractionOptions = new System.Windows.Forms.GroupBox();
             btnRunDiagnostics = new System.Windows.Forms.Button();
+            btnExtractAll = new System.Windows.Forms.Button();
             btnExtractBaseReactions = new System.Windows.Forms.Button();
             btnExtractProjectInfo = new System.Windows.Forms.Button();
             btnExtractStoryInfo = new System.Windows.Forms.Button();
