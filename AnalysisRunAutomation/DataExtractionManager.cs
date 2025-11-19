@@ -624,7 +624,7 @@ namespace ETABS_Plugin
                 reportSb.AppendLine($"✓ Found {numberNames} area object(s)");
 
                 // CSV Header
-                sb.AppendLine("Name,Label,Story,PropertyName,Thickness(mm),CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
+                sb.AppendLine("Name,Label,Story,PropertyName,WallType,Thickness(mm),PierLabel,SpandrelLabel,CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
 
                 // Extract data for each area object
                 int wallCount = 0;
@@ -688,8 +688,28 @@ namespace ETABS_Plugin
                     // Convert thickness to mm
                     double thicknessMm = thickness * 1000;
 
+                    // Get pier label assignment
+                    string pierLabel = "";
+                    ret = _SapModel.AreaObj.GetPier(name, ref pierLabel);
+                    if (ret != 0 || string.IsNullOrEmpty(pierLabel))
+                    {
+                        pierLabel = "None";
+                    }
+
+                    // Get spandrel label assignment
+                    string spandrelLabel = "";
+                    ret = _SapModel.AreaObj.GetSpandrel(name, ref spandrelLabel);
+                    if (ret != 0 || string.IsNullOrEmpty(spandrelLabel))
+                    {
+                        spandrelLabel = "None";
+                    }
+
+                    // Convert wall property type to readable string
+                    string wallTypeStr = wallPropType.ToString();
+
                     sb.AppendLine($"\"{name}\",\"{label}\",\"{story}\",\"{propName}\"," +
-                        $"{thicknessMm:0.00}," +
+                        $"\"{wallTypeStr}\",{thicknessMm:0.00}," +
+                        $"\"{pierLabel}\",\"{spandrelLabel}\"," +
                         $"{centroidX:0.0000},{centroidY:0.0000},{centroidZ:0.0000}," +
                         $"{minX:0.0000},{maxX:0.0000},{minY:0.0000},{maxY:0.0000}");
                     wallCount++;
