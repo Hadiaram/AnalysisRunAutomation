@@ -627,10 +627,14 @@ namespace ETABS_Plugin
                 reportSb.AppendLine($"✓ Found {numberNames} area object(s)");
 
                 // CSV Header
-                sb.AppendLine("Name,Label,Story,PropertyName,WallType,Thickness(mm),PierLabel,SpandrelLabel,CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
+                sb.AppendLine("Name,Label,Story,PropertyName,WallType,Thickness(mm),PierLabel,SpandrelLabel,WallFunction,CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
 
                 // Extract data for each area object
                 int wallCount = 0;
+                int shearWallCount = 0;
+                int spandrelCount = 0;
+                int gravityWallCount = 0;
+
                 for (int i = 0; i < numberNames; i++)
                 {
                     string name = names[i];
@@ -710,15 +714,38 @@ namespace ETABS_Plugin
                     // Convert wall property type to readable string
                     string wallTypeStr = wallPropType.ToString();
 
+                    // Determine wall function based on pier/spandrel assignment
+                    string wallFunction;
+                    if (pierLabel != "None")
+                    {
+                        wallFunction = "Shear Wall/Core";  // Lateral load-resisting wall
+                        shearWallCount++;
+                    }
+                    else if (spandrelLabel != "None")
+                    {
+                        wallFunction = "Spandrel";  // Coupling beam/spandrel wall
+                        spandrelCount++;
+                    }
+                    else
+                    {
+                        wallFunction = "Gravity/Partition";  // Non-lateral wall
+                        gravityWallCount++;
+                    }
+
                     sb.AppendLine($"\"{name}\",\"{label}\",\"{story}\",\"{propName}\"," +
                         $"\"{wallTypeStr}\",{thicknessMm:0.00}," +
-                        $"\"{pierLabel}\",\"{spandrelLabel}\"," +
+                        $"\"{pierLabel}\",\"{spandrelLabel}\",\"{wallFunction}\"," +
                         $"{centroidX:0.0000},{centroidY:0.0000},{centroidZ:0.0000}," +
                         $"{minX:0.0000},{maxX:0.0000},{minY:0.0000},{maxY:0.0000}");
                     wallCount++;
                 }
 
                 reportSb.AppendLine($"✓ Successfully extracted {wallCount} wall element(s)");
+                reportSb.AppendLine();
+                reportSb.AppendLine("Wall Classification Breakdown:");
+                reportSb.AppendLine($"  - Shear Walls/Cores: {shearWallCount}");
+                reportSb.AppendLine($"  - Spandrel Walls: {spandrelCount}");
+                reportSb.AppendLine($"  - Gravity/Partition Walls: {gravityWallCount}");
 
                 if (wallCount > 0)
                 {
@@ -1260,65 +1287,105 @@ namespace ETABS_Plugin
             {
                 cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                // Try different table keys
+                // Comprehensive list of common ETABS database table names
                 string[] tableKeysToTry = new string[]
                 {
+                    // Material tables
                     "Material List 2 - By Object Type",
                     "Material List - By Object Type",
                     "Material List 2",
-                    "Objects and Elements - Summary"
+                    "Material List 1 - By Object Type",
+                    "Material List 2 - Material Properties",
+                    "Material Properties 02 - Basic Mechanical Properties",
+                    "Material Properties 03a - Steel Data",
+                    "Material Properties 03b - Concrete Data",
+
+                    // Object summary tables
+                    "Objects and Elements - Summary",
+                    "Objects and Elements - Frames",
+                    "Objects and Elements - Areas",
+
+                    // Connectivity tables
+                    "Connectivity - Frame",
+                    "Connectivity - Area",
+
+                    // Section properties
+                    "Frame Section Properties 01 - General",
+                    "Area Section Properties",
+
+                    // Loads
+                    "Load Pattern Definitions",
+                    "Load Case Definitions",
+                    "Load Combination Definitions",
+
+                    // Analysis results
+                    "Modal Participating Mass Ratios",
+                    "Modal Periods And Frequencies",
+                    "Base Reactions",
+
+                    // Design results
+                    "Concrete Frame Design Summary",
+                    "Steel Frame Design Summary"
                 };
 
-                string[] fieldKeyList = null;  // Request all fields
-                string groupName = "";  // All groups
-                int tableVersion = 0;
-                string[] fieldsKeysIncluded = null;
-                int numRecords = 0;
-                string[] tableData = null;
-                string successfulTableKey = "";
+                // Find all available tables
+                var availableTables = new List<(string tableName, int recordCount, string[] fields, string[] data)>();
 
-                int ret = -1;
                 foreach (string tableKey in tableKeysToTry)
                 {
-                    ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
+                    string[] fieldKeyList = null;
+                    string groupName = "";
+                    int tableVersion = 0;
+                    string[] fieldsKeysIncluded = null;
+                    int numRecords = 0;
+                    string[] tableData = null;
+
+                    int ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
                         ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
 
-                    if (ret == 0 && numRecords > 0)
+                    if (ret == 0 && numRecords > 0 && fieldsKeysIncluded != null && tableData != null)
                     {
-                        successfulTableKey = tableKey;
-                        break;
+                        availableTables.Add((tableKey, numRecords, fieldsKeysIncluded, tableData));
                     }
                 }
 
-                if (ret != 0 || numRecords == 0 || fieldsKeysIncluded == null || tableData == null)
+                if (availableTables.Count == 0)
                 {
                     csvData = "";
-                    report = "ERROR: Could not retrieve quantities data. Please ensure:\n" +
-                            "1. The model has objects (frames, areas, etc.)\n" +
-                            "2. Materials are assigned to objects\n\n" +
-                            "Tried tables: " + string.Join(", ", tableKeysToTry) + "\n\n" +
+                    report = "ERROR: No database tables with data were found.\n\n" +
+                            "Possible reasons:\n" +
+                            "1. The model has no objects (frames, areas, etc.)\n" +
+                            "2. Materials are not assigned to objects\n" +
+                            "3. Analysis has not been run\n\n" +
+                            $"Tried {tableKeysToTry.Length} common table names.\n\n" +
                             "Note: You can view available tables in Display > Show Tables";
                     return false;
                 }
 
+                // Extract the first available table with the most records
+                var selectedTable = availableTables.OrderByDescending(t => t.recordCount).First();
+
                 var csv = new StringBuilder();
-                csv.AppendLine($"# Table: {successfulTableKey}");
+                csv.AppendLine($"# Table: {selectedTable.tableName}");
+                csv.AppendLine($"# Records: {selectedTable.recordCount}");
+                csv.AppendLine($"# Note: {availableTables.Count} total table(s) available in model");
+                csv.AppendLine();
 
                 // Add header row
-                csv.AppendLine(string.Join(",", fieldsKeysIncluded));
+                csv.AppendLine(string.Join(",", selectedTable.fields));
 
                 // Add data rows
-                int numFields = fieldsKeysIncluded.Length;
-                for (int i = 0; i < numRecords; i++)
+                int numFields = selectedTable.fields.Length;
+                for (int i = 0; i < selectedTable.recordCount; i++)
                 {
                     var rowData = new List<string>();
                     for (int j = 0; j < numFields; j++)
                     {
                         int index = i * numFields + j;
-                        if (index < tableData.Length)
+                        if (index < selectedTable.data.Length)
                         {
                             // Escape commas in data
-                            string value = tableData[index];
+                            string value = selectedTable.data[index];
                             if (value.Contains(","))
                             {
                                 value = $"\"{value}\"";
@@ -1330,7 +1397,18 @@ namespace ETABS_Plugin
                 }
 
                 csvData = csv.ToString();
-                report = $"Successfully extracted '{successfulTableKey}' with {numRecords} records and {numFields} fields";
+
+                var reportSb = new StringBuilder();
+                reportSb.AppendLine($"✓ Successfully extracted '{selectedTable.tableName}'");
+                reportSb.AppendLine($"  Records: {selectedTable.recordCount}, Fields: {numFields}");
+                reportSb.AppendLine();
+                reportSb.AppendLine($"Found {availableTables.Count} available table(s) in total:");
+                foreach (var table in availableTables.OrderByDescending(t => t.recordCount))
+                {
+                    reportSb.AppendLine($"  - {table.tableName} ({table.recordCount} records)");
+                }
+
+                report = reportSb.ToString();
                 return true;
             }
             catch (Exception ex)
@@ -1543,13 +1621,24 @@ namespace ETABS_Plugin
                 sb.AppendLine();
                 try
                 {
+                    // Use comprehensive list
                     string[] tableKeys = new string[]
                     {
                         "Material List 2 - By Object Type",
-                        "Material List 2 - Material Properties",
+                        "Material List - By Object Type",
+                        "Material List 2",
+                        "Material List 1 - By Object Type",
+                        "Material Properties 02 - Basic Mechanical Properties",
                         "Objects and Elements - Summary",
+                        "Objects and Elements - Frames",
+                        "Objects and Elements - Areas",
                         "Connectivity - Frame",
-                        "Connectivity - Area"
+                        "Connectivity - Area",
+                        "Frame Section Properties 01 - General",
+                        "Area Section Properties",
+                        "Load Pattern Definitions",
+                        "Modal Periods And Frequencies",
+                        "Base Reactions"
                     };
 
                     int availableCount = 0;
@@ -1569,13 +1658,14 @@ namespace ETABS_Plugin
                             sb.AppendLine($"  ✓ {tableKey} ({nr} records)");
                             availableCount++;
                         }
-                        else
-                        {
-                            sb.AppendLine($"  ✗ {tableKey} (not available)");
-                        }
                     }
 
-                    if (availableCount == 0)
+                    if (availableCount > 0)
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine($"  Total: {availableCount} table(s) available");
+                    }
+                    else
                     {
                         sb.AppendLine();
                         sb.AppendLine("  If ALL tables show 'not available', this is usually because:");
