@@ -28,6 +28,9 @@ namespace ETABS_Plugin
 
             try
             {
+                // Setup all cases for output
+                SetupAllCasesForOutput();
+
                 reportSb.AppendLine("Extracting base reactions...\r\n");
 
                 // Get all load cases
@@ -868,12 +871,62 @@ namespace ETABS_Plugin
         }
 
         /// <summary>
+        /// Helper method to setup all load cases for result output
+        /// </summary>
+        private void SetupAllCasesForOutput()
+        {
+            try
+            {
+                _SapModel.Results.Setup.DeselectAllCasesAndCombosForOutput();
+
+                // Get all load cases
+                int numCases = 0;
+                string[] caseNames = null;
+                _SapModel.LoadCases.GetNameList(ref numCases, ref caseNames);
+
+                // Select all cases for output
+                if (numCases > 0 && caseNames != null)
+                {
+                    for (int i = 0; i < numCases; i++)
+                    {
+                        try
+                        {
+                            _SapModel.Results.Setup.SetCaseSelectedForOutput(caseNames[i]);
+                        }
+                        catch { }
+                    }
+                }
+
+                // Also get and select all combos
+                int numCombos = 0;
+                string[] comboNames = null;
+                _SapModel.RespCombo.GetNameList(ref numCombos, ref comboNames);
+
+                if (numCombos > 0 && comboNames != null)
+                {
+                    for (int i = 0; i < numCombos; i++)
+                    {
+                        try
+                        {
+                            _SapModel.Results.Setup.SetComboSelectedForOutput(comboNames[i]);
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
         /// Extracts modal periods and frequencies
         /// </summary>
         public bool ExtractModalPeriods(out string csvData, out string report)
         {
             try
             {
+                // Setup all cases for output
+                SetupAllCasesForOutput();
+
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -932,6 +985,9 @@ namespace ETABS_Plugin
         {
             try
             {
+                // Setup all cases for output
+                SetupAllCasesForOutput();
+
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1003,6 +1059,9 @@ namespace ETABS_Plugin
         {
             try
             {
+                // Setup all cases for output
+                SetupAllCasesForOutput();
+
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1066,6 +1125,9 @@ namespace ETABS_Plugin
         {
             try
             {
+                // Setup all cases for output
+                SetupAllCasesForOutput();
+
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1393,7 +1455,18 @@ namespace ETABS_Plugin
                     try
                     {
                         _SapModel.Results.Setup.DeselectAllCasesAndCombosForOutput();
-                        _SapModel.Results.Setup.SetCaseSelectedForOutput("MODAL");
+                        // Select ALL cases for output instead of specific "MODAL" case
+                        if (numLoadCases > 0)
+                        {
+                            for (int i = 0; i < numLoadCases; i++)
+                            {
+                                try
+                                {
+                                    _SapModel.Results.Setup.SetCaseSelectedForOutput(loadCaseNames[i]);
+                                }
+                                catch { }
+                            }
+                        }
                     }
                     catch { }
 

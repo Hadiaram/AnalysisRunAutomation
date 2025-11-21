@@ -30,6 +30,7 @@ namespace ETABS_Plugin
         {
             lblTitle = new System.Windows.Forms.Label();
             grpExtractionOptions = new System.Windows.Forms.GroupBox();
+            scrollablePanel = new System.Windows.Forms.Panel();
             btnRunDiagnostics = new System.Windows.Forms.Button();
             btnExtractAll = new System.Windows.Forms.Button();
             btnExtractBaseReactions = new System.Windows.Forms.Button();
@@ -51,6 +52,7 @@ namespace ETABS_Plugin
             lblStatus = new System.Windows.Forms.Label();
             btnClearStatus = new System.Windows.Forms.Button();
             grpExtractionOptions.SuspendLayout();
+            scrollablePanel.SuspendLayout();
             SuspendLayout();
             //
             // lblTitle
@@ -65,35 +67,46 @@ namespace ETABS_Plugin
             //
             // grpExtractionOptions
             //
-            grpExtractionOptions.Controls.Add(btnRunDiagnostics);
-            grpExtractionOptions.Controls.Add(btnExtractAll);
-            grpExtractionOptions.Controls.Add(btnExtractBaseReactions);
-            grpExtractionOptions.Controls.Add(btnExtractProjectInfo);
-            grpExtractionOptions.Controls.Add(btnExtractStoryInfo);
-            grpExtractionOptions.Controls.Add(btnExtractGridInfo);
-            grpExtractionOptions.Controls.Add(btnExtractFrameModifiers);
-            grpExtractionOptions.Controls.Add(btnExtractAreaModifiers);
-            grpExtractionOptions.Controls.Add(btnExtractWallElements);
-            grpExtractionOptions.Controls.Add(btnExtractColumnElements);
-            grpExtractionOptions.Controls.Add(btnExtractModalPeriods);
-            grpExtractionOptions.Controls.Add(btnExtractModalMassRatios);
-            grpExtractionOptions.Controls.Add(btnExtractStoryDrifts);
-            grpExtractionOptions.Controls.Add(btnExtractBaseShear);
-            grpExtractionOptions.Controls.Add(btnExtractCompositeColumnDesign);
-            grpExtractionOptions.Controls.Add(btnExtractQuantitiesSummary);
-            grpExtractionOptions.Controls.Add(lblPlaceholder);
+            grpExtractionOptions.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            grpExtractionOptions.Controls.Add(scrollablePanel);
             grpExtractionOptions.Location = new System.Drawing.Point(12, 42);
             grpExtractionOptions.Name = "grpExtractionOptions";
-            grpExtractionOptions.Size = new System.Drawing.Size(460, 820);
+            grpExtractionOptions.Size = new System.Drawing.Size(460, 450);
             grpExtractionOptions.TabIndex = 1;
             grpExtractionOptions.TabStop = false;
             grpExtractionOptions.Text = "Extraction Options";
+            //
+            // scrollablePanel
+            //
+            scrollablePanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            scrollablePanel.AutoScroll = true;
+            scrollablePanel.Controls.Add(btnRunDiagnostics);
+            scrollablePanel.Controls.Add(btnExtractAll);
+            scrollablePanel.Controls.Add(btnExtractBaseReactions);
+            scrollablePanel.Controls.Add(btnExtractProjectInfo);
+            scrollablePanel.Controls.Add(btnExtractStoryInfo);
+            scrollablePanel.Controls.Add(btnExtractGridInfo);
+            scrollablePanel.Controls.Add(btnExtractFrameModifiers);
+            scrollablePanel.Controls.Add(btnExtractAreaModifiers);
+            scrollablePanel.Controls.Add(btnExtractWallElements);
+            scrollablePanel.Controls.Add(btnExtractColumnElements);
+            scrollablePanel.Controls.Add(btnExtractModalPeriods);
+            scrollablePanel.Controls.Add(btnExtractModalMassRatios);
+            scrollablePanel.Controls.Add(btnExtractStoryDrifts);
+            scrollablePanel.Controls.Add(btnExtractBaseShear);
+            scrollablePanel.Controls.Add(btnExtractCompositeColumnDesign);
+            scrollablePanel.Controls.Add(btnExtractQuantitiesSummary);
+            scrollablePanel.Controls.Add(lblPlaceholder);
+            scrollablePanel.Location = new System.Drawing.Point(6, 22);
+            scrollablePanel.Name = "scrollablePanel";
+            scrollablePanel.Size = new System.Drawing.Size(448, 422);
+            scrollablePanel.TabIndex = 0;
             //
             // btnRunDiagnostics
             //
             btnRunDiagnostics.BackColor = System.Drawing.Color.Orange;
             btnRunDiagnostics.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            btnRunDiagnostics.Location = new System.Drawing.Point(15, 30);
+            btnRunDiagnostics.Location = new System.Drawing.Point(10, 10);
             btnRunDiagnostics.Name = "btnRunDiagnostics";
             btnRunDiagnostics.Size = new System.Drawing.Size(430, 40);
             btnRunDiagnostics.TabIndex = 0;
@@ -105,7 +118,7 @@ namespace ETABS_Plugin
             //
             btnExtractAll.BackColor = System.Drawing.Color.LimeGreen;
             btnExtractAll.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractAll.Location = new System.Drawing.Point(15, 80);
+            btnExtractAll.Location = new System.Drawing.Point(10, 60);
             btnExtractAll.Name = "btnExtractAll";
             btnExtractAll.Size = new System.Drawing.Size(430, 40);
             btnExtractAll.TabIndex = 1;
@@ -117,7 +130,7 @@ namespace ETABS_Plugin
             //
             btnExtractBaseReactions.BackColor = System.Drawing.Color.LightSkyBlue;
             btnExtractBaseReactions.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractBaseReactions.Location = new System.Drawing.Point(15, 130);
+            btnExtractBaseReactions.Location = new System.Drawing.Point(10, 110);
             btnExtractBaseReactions.Name = "btnExtractBaseReactions";
             btnExtractBaseReactions.Size = new System.Drawing.Size(430, 40);
             btnExtractBaseReactions.TabIndex = 0;
@@ -129,7 +142,7 @@ namespace ETABS_Plugin
             //
             btnExtractProjectInfo.BackColor = System.Drawing.Color.LightCyan;
             btnExtractProjectInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractProjectInfo.Location = new System.Drawing.Point(15, 180);
+            btnExtractProjectInfo.Location = new System.Drawing.Point(10, 160);
             btnExtractProjectInfo.Name = "btnExtractProjectInfo";
             btnExtractProjectInfo.Size = new System.Drawing.Size(430, 40);
             btnExtractProjectInfo.TabIndex = 2;
@@ -141,7 +154,7 @@ namespace ETABS_Plugin
             //
             btnExtractStoryInfo.BackColor = System.Drawing.Color.LightYellow;
             btnExtractStoryInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractStoryInfo.Location = new System.Drawing.Point(15, 230);
+            btnExtractStoryInfo.Location = new System.Drawing.Point(10, 210);
             btnExtractStoryInfo.Name = "btnExtractStoryInfo";
             btnExtractStoryInfo.Size = new System.Drawing.Size(430, 40);
             btnExtractStoryInfo.TabIndex = 4;
@@ -153,7 +166,7 @@ namespace ETABS_Plugin
             //
             btnExtractGridInfo.BackColor = System.Drawing.Color.LightGreen;
             btnExtractGridInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractGridInfo.Location = new System.Drawing.Point(15, 280);
+            btnExtractGridInfo.Location = new System.Drawing.Point(10, 260);
             btnExtractGridInfo.Name = "btnExtractGridInfo";
             btnExtractGridInfo.Size = new System.Drawing.Size(430, 40);
             btnExtractGridInfo.TabIndex = 6;
@@ -165,7 +178,7 @@ namespace ETABS_Plugin
             //
             btnExtractFrameModifiers.BackColor = System.Drawing.Color.LightSalmon;
             btnExtractFrameModifiers.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractFrameModifiers.Location = new System.Drawing.Point(15, 330);
+            btnExtractFrameModifiers.Location = new System.Drawing.Point(10, 310);
             btnExtractFrameModifiers.Name = "btnExtractFrameModifiers";
             btnExtractFrameModifiers.Size = new System.Drawing.Size(430, 40);
             btnExtractFrameModifiers.TabIndex = 8;
@@ -177,7 +190,7 @@ namespace ETABS_Plugin
             //
             btnExtractAreaModifiers.BackColor = System.Drawing.Color.LightPink;
             btnExtractAreaModifiers.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractAreaModifiers.Location = new System.Drawing.Point(15, 380);
+            btnExtractAreaModifiers.Location = new System.Drawing.Point(10, 360);
             btnExtractAreaModifiers.Name = "btnExtractAreaModifiers";
             btnExtractAreaModifiers.Size = new System.Drawing.Size(430, 40);
             btnExtractAreaModifiers.TabIndex = 9;
@@ -189,7 +202,7 @@ namespace ETABS_Plugin
             //
             btnExtractWallElements.BackColor = System.Drawing.Color.LightGoldenrodYellow;
             btnExtractWallElements.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractWallElements.Location = new System.Drawing.Point(15, 430);
+            btnExtractWallElements.Location = new System.Drawing.Point(10, 410);
             btnExtractWallElements.Name = "btnExtractWallElements";
             btnExtractWallElements.Size = new System.Drawing.Size(430, 40);
             btnExtractWallElements.TabIndex = 11;
@@ -201,7 +214,7 @@ namespace ETABS_Plugin
             //
             btnExtractColumnElements.BackColor = System.Drawing.Color.LightSteelBlue;
             btnExtractColumnElements.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractColumnElements.Location = new System.Drawing.Point(15, 480);
+            btnExtractColumnElements.Location = new System.Drawing.Point(10, 460);
             btnExtractColumnElements.Name = "btnExtractColumnElements";
             btnExtractColumnElements.Size = new System.Drawing.Size(430, 40);
             btnExtractColumnElements.TabIndex = 12;
@@ -213,7 +226,7 @@ namespace ETABS_Plugin
             //
             btnExtractModalPeriods.BackColor = System.Drawing.Color.LightCyan;
             btnExtractModalPeriods.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractModalPeriods.Location = new System.Drawing.Point(15, 530);
+            btnExtractModalPeriods.Location = new System.Drawing.Point(10, 510);
             btnExtractModalPeriods.Name = "btnExtractModalPeriods";
             btnExtractModalPeriods.Size = new System.Drawing.Size(430, 40);
             btnExtractModalPeriods.TabIndex = 13;
@@ -225,7 +238,7 @@ namespace ETABS_Plugin
             //
             btnExtractModalMassRatios.BackColor = System.Drawing.Color.LightBlue;
             btnExtractModalMassRatios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractModalMassRatios.Location = new System.Drawing.Point(15, 580);
+            btnExtractModalMassRatios.Location = new System.Drawing.Point(10, 560);
             btnExtractModalMassRatios.Name = "btnExtractModalMassRatios";
             btnExtractModalMassRatios.Size = new System.Drawing.Size(430, 40);
             btnExtractModalMassRatios.TabIndex = 14;
@@ -237,7 +250,7 @@ namespace ETABS_Plugin
             //
             btnExtractStoryDrifts.BackColor = System.Drawing.Color.LightPink;
             btnExtractStoryDrifts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractStoryDrifts.Location = new System.Drawing.Point(15, 630);
+            btnExtractStoryDrifts.Location = new System.Drawing.Point(10, 610);
             btnExtractStoryDrifts.Name = "btnExtractStoryDrifts";
             btnExtractStoryDrifts.Size = new System.Drawing.Size(430, 40);
             btnExtractStoryDrifts.TabIndex = 15;
@@ -249,7 +262,7 @@ namespace ETABS_Plugin
             //
             btnExtractBaseShear.BackColor = System.Drawing.Color.PaleGreen;
             btnExtractBaseShear.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractBaseShear.Location = new System.Drawing.Point(15, 680);
+            btnExtractBaseShear.Location = new System.Drawing.Point(10, 660);
             btnExtractBaseShear.Name = "btnExtractBaseShear";
             btnExtractBaseShear.Size = new System.Drawing.Size(430, 40);
             btnExtractBaseShear.TabIndex = 16;
@@ -261,7 +274,7 @@ namespace ETABS_Plugin
             //
             btnExtractCompositeColumnDesign.BackColor = System.Drawing.Color.LightYellow;
             btnExtractCompositeColumnDesign.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractCompositeColumnDesign.Location = new System.Drawing.Point(15, 730);
+            btnExtractCompositeColumnDesign.Location = new System.Drawing.Point(10, 710);
             btnExtractCompositeColumnDesign.Name = "btnExtractCompositeColumnDesign";
             btnExtractCompositeColumnDesign.Size = new System.Drawing.Size(430, 40);
             btnExtractCompositeColumnDesign.TabIndex = 17;
@@ -273,7 +286,7 @@ namespace ETABS_Plugin
             //
             btnExtractQuantitiesSummary.BackColor = System.Drawing.Color.LightSalmon;
             btnExtractQuantitiesSummary.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btnExtractQuantitiesSummary.Location = new System.Drawing.Point(15, 780);
+            btnExtractQuantitiesSummary.Location = new System.Drawing.Point(10, 760);
             btnExtractQuantitiesSummary.Name = "btnExtractQuantitiesSummary";
             btnExtractQuantitiesSummary.Size = new System.Drawing.Size(430, 40);
             btnExtractQuantitiesSummary.TabIndex = 18;
@@ -293,18 +306,20 @@ namespace ETABS_Plugin
             //
             // txtStatus
             //
-            txtStatus.Location = new System.Drawing.Point(12, 893);
+            txtStatus.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            txtStatus.Location = new System.Drawing.Point(12, 523);
             txtStatus.Multiline = true;
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
             txtStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txtStatus.Size = new System.Drawing.Size(460, 200);
+            txtStatus.Size = new System.Drawing.Size(460, 150);
             txtStatus.TabIndex = 2;
             //
             // lblStatus
             //
+            lblStatus.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             lblStatus.AutoSize = true;
-            lblStatus.Location = new System.Drawing.Point(12, 875);
+            lblStatus.Location = new System.Drawing.Point(12, 505);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new System.Drawing.Size(42, 15);
             lblStatus.TabIndex = 3;
@@ -312,7 +327,8 @@ namespace ETABS_Plugin
             //
             // btnClearStatus
             //
-            btnClearStatus.Location = new System.Drawing.Point(390, 870);
+            btnClearStatus.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnClearStatus.Location = new System.Drawing.Point(390, 500);
             btnClearStatus.Name = "btnClearStatus";
             btnClearStatus.Size = new System.Drawing.Size(82, 23);
             btnClearStatus.TabIndex = 4;
@@ -324,20 +340,22 @@ namespace ETABS_Plugin
             //
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(484, 1105);
+            ClientSize = new System.Drawing.Size(484, 685);
             Controls.Add(btnClearStatus);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
             Controls.Add(grpExtractionOptions);
             Controls.Add(lblTitle);
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            MaximizeBox = true;
+            MinimumSize = new System.Drawing.Size(500, 600);
             Name = "DataExtractionForm";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "ETABS Data Extraction";
             Load += DataExtractionForm_Load;
             grpExtractionOptions.ResumeLayout(false);
-            grpExtractionOptions.PerformLayout();
+            scrollablePanel.ResumeLayout(false);
+            scrollablePanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -346,6 +364,7 @@ namespace ETABS_Plugin
 
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.GroupBox grpExtractionOptions;
+        private System.Windows.Forms.Panel scrollablePanel;
         private System.Windows.Forms.Button btnRunDiagnostics;
         private System.Windows.Forms.Button btnExtractAll;
         private System.Windows.Forms.Button btnExtractBaseReactions;
