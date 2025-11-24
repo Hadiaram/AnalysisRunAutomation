@@ -137,5 +137,106 @@ namespace ETABS_Plugin
             MessageBox.Show("Example values loaded!\n\nThis will create a 4m x 0.2m wall at elevation 3m.",
                 "Example Loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+
+        private void btnGenerateTemplate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using var saveFileDialog = new SaveFileDialog
+                {
+                    Title = "Save CSV template",
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    DefaultExt = "csv",
+                    FileName = "walls_template.csv"
+                };
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (_WallManager.GenerateCsvTemplate(saveFileDialog.FileName, out string report))
+                    {
+                        txtStatus.Clear();
+                        txtStatus.AppendText(report);
+
+                        var result = MessageBox.Show(
+                            $"CSV template created successfully!\n\n{saveFileDialog.FileName}\n\n" +
+                            "Would you like to open the template file now?",
+                            "Template Created",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Information);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = saveFileDialog.FileName,
+                                UseShellExecute = true
+                            });
+                        }
+                    }
+                    else
+                    {
+                        txtStatus.Clear();
+                        txtStatus.AppendText(report);
+                        MessageBox.Show($"Failed to create template:\n\n{report}", "Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nERROR: {ex.Message}\r\n");
+                MessageBox.Show($"Error creating template: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnImportCsv_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using var openFileDialog = new OpenFileDialog
+                {
+                    Title = "Select CSV file with wall data",
+                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    DefaultExt = "csv",
+                    CheckFileExists = true
+                };
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    txtStatus.Clear();
+                    txtStatus.AppendText($"Importing walls from: {openFileDialog.FileName}\r\n\r\n");
+
+                    Cursor = Cursors.WaitCursor;
+
+                    if (_WallManager.ImportWallsFromCsv(openFileDialog.FileName, out string report))
+                    {
+                        txtStatus.AppendText(report);
+                        MessageBox.Show($"CSV import completed successfully!\n\nCheck the status window for details.",
+                            "CSV Import Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        txtStatus.AppendText(report);
+                        MessageBox.Show($"CSV import had errors. Check status window for details.\n\nCommon issues:\n" +
+                            "- Missing required columns\n" +
+                            "- Invalid coordinate values\n" +
+                            "- Material doesn't exist in model\n\n" +
+                            "See status window for specific errors.",
+                            "CSV Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nERROR: {ex.Message}\r\n");
+                MessageBox.Show($"Error importing CSV: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
     }
 }

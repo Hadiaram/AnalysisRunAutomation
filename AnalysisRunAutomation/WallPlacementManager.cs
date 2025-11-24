@@ -170,6 +170,115 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Imports multiple walls from a CSV file
+        /// </summary>
+        public bool ImportWallsFromCsv(string csvFilePath, out string report)
+        {
+            var sb = new System.Text.StringBuilder();
+
+            try
+            {
+                sb.AppendLine($"=== CSV IMPORT: {System.IO.Path.GetFileName(csvFilePath)} ===\r\n");
+
+                // Parse CSV file
+                var parser = new WallCsvParser();
+                if (!parser.ParseFile(csvFilePath, out var rows, out var parseErrors))
+                {
+                    sb.AppendLine("✗ CSV parsing failed:");
+                    foreach (var error in parseErrors)
+                    {
+                        sb.AppendLine($"  - {error}");
+                    }
+                    report = sb.ToString();
+                    return false;
+                }
+
+                sb.AppendLine($"✓ CSV parsed successfully: {rows.Count} wall(s) found\r\n");
+
+                if (rows.Count == 0)
+                {
+                    sb.AppendLine("⚠ No walls to import");
+                    report = sb.ToString();
+                    return true;
+                }
+
+                // Import each wall
+                int successCount = 0;
+                int failCount = 0;
+
+                foreach (var row in rows)
+                {
+                    sb.AppendLine($"\r\n--- Processing wall: {row.WallName} ---");
+
+                    string wallReport = "";
+                    bool success = PlaceWall(
+                        row.X1, row.Y1,
+                        row.X2, row.Y2,
+                        row.X3, row.Y3,
+                        row.X4, row.Y4,
+                        row.Elevation,
+                        row.MaterialName,
+                        row.ThicknessMm / 1000.0, // Convert mm to m
+                        row.BetaAngle,
+                        row.PierLabel,
+                        out wallReport
+                    );
+
+                    sb.Append(wallReport);
+
+                    if (success)
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        failCount++;
+                    }
+                }
+
+                sb.AppendLine($"\r\n=== IMPORT SUMMARY ===");
+                sb.AppendLine($"Total walls: {rows.Count}");
+                sb.AppendLine($"✓ Successful: {successCount}");
+                sb.AppendLine($"✗ Failed: {failCount}");
+
+                report = sb.ToString();
+                return failCount == 0;
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"\r\n✗ Unexpected error during CSV import: {ex.Message}");
+                report = sb.ToString();
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Generates a CSV template file
+        /// </summary>
+        public bool GenerateCsvTemplate(string outputPath, out string report)
+        {
+            try
+            {
+                var parser = new WallCsvParser();
+                parser.GenerateTemplate(outputPath);
+
+                report = $"✓ CSV template generated successfully:\r\n{outputPath}\r\n\r\n" +
+                         "The template includes:\r\n" +
+                         "- Header row with all required columns\r\n" +
+                         "- Sample wall definitions (3 examples)\r\n" +
+                         "- Comments explaining the format\r\n\r\n" +
+                         "Edit the template to define your walls, then import it using 'Import from CSV'.";
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                report = $"✗ Failed to generate CSV template: {ex.Message}";
+                return false;
+            }
+        }
+
         private bool CheckResult(int ret, string operation, ref string report)
         {
             if (ret != 0)
