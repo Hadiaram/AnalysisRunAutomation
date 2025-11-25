@@ -1285,90 +1285,113 @@ namespace ETABS_Plugin
         {
             try
             {
+                var reportSb = new StringBuilder();
                 cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                // Comprehensive list of common ETABS database table names
-                string[] tableKeysToTry = new string[]
+                // Step 1: Discover all available tables dynamically
+                reportSb.AppendLine("Discovering available database tables...\r\n");
+
+                int numTables = 0;
+                string[] tableKeys = Array.Empty<string>();
+                string[] tableNames = Array.Empty<string>();
+                int[] importTypes = Array.Empty<int>();
+
+                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
+
+                if (ret != 0)
                 {
-                    // Material tables
-                    "Material List 2 - By Object Type",
-                    "Material List - By Object Type",
-                    "Material List 2",
-                    "Material List 1 - By Object Type",
-                    "Material List 2 - Material Properties",
-                    "Material Properties 02 - Basic Mechanical Properties",
-                    "Material Properties 03a - Steel Data",
-                    "Material Properties 03b - Concrete Data",
+                    csvData = "";
+                    report = "ERROR: Failed to get available database tables from ETABS API.\n" +
+                            "Return code: " + ret + "\n\n" +
+                            "Possible reasons:\n" +
+                            "1. ETABS model is locked (File > Unlock Model)\n" +
+                            "2. API connection issue";
+                    return false;
+                }
 
-                    // Object summary tables
-                    "Objects and Elements - Summary",
-                    "Objects and Elements - Frames",
-                    "Objects and Elements - Areas",
+                reportSb.AppendLine($"✓ Found {numTables} database table(s) in the model\r\n");
 
-                    // Connectivity tables
-                    "Connectivity - Frame",
-                    "Connectivity - Area",
-
-                    // Section properties
-                    "Frame Section Properties 01 - General",
-                    "Area Section Properties",
-
-                    // Loads
-                    "Load Pattern Definitions",
-                    "Load Case Definitions",
-                    "Load Combination Definitions",
-
-                    // Analysis results
-                    "Modal Participating Mass Ratios",
-                    "Modal Periods And Frequencies",
-                    "Base Reactions",
-
-                    // Design results
-                    "Concrete Frame Design Summary",
-                    "Steel Frame Design Summary"
-                };
-
-                // Find all available tables
-                var availableTables = new List<(string tableName, int recordCount, string[] fields, string[] data)>();
-
-                foreach (string tableKey in tableKeysToTry)
+                if (numTables == 0)
                 {
-                    string[] fieldKeyList = null;
-                    string groupName = "";
-                    int tableVersion = 0;
-                    string[] fieldsKeysIncluded = null;
-                    int numRecords = 0;
-                    string[] tableData = null;
+                    csvData = "";
+                    report = reportSb.ToString() +
+                            "\nERROR: No database tables available.\n\n" +
+                            "This usually means the model has no objects or data.";
+                    return false;
+                }
 
-                    int ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
-                        ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+                // Step 2: Prioritize tables - look for material, object, and connectivity tables
+                reportSb.AppendLine("Searching for data-rich tables...");
 
-                    if (ret == 0 && numRecords > 0 && fieldsKeysIncluded != null && tableData != null)
+                var priorityKeywords = new[] { "MATERIAL", "OBJECT", "ELEMENT", "CONNECTIVITY", "SECTION", "PROPERTY" };
+                var availableTables = new List<(string tableKey, string tableName, int recordCount, string[] fields, string[] data)>();
+
+                for (int i = 0; i < numTables; i++)
+                {
+                    string tableKey = tableKeys[i];
+                    string tableName = tableNames[i];
+                    string tableKeyUpper = tableKey.ToUpperInvariant();
+
+                    // Check if this table matches our priority keywords
+                    bool isPriority = priorityKeywords.Any(kw => tableKeyUpper.Contains(kw));
+
+                    if (isPriority)
                     {
-                        availableTables.Add((tableKey, numRecords, fieldsKeysIncluded, tableData));
+                        // Try to get data from this table
+                        string[] fieldKeyList = null;
+                        string groupName = "";
+                        int tableVersion = 0;
+                        string[] fieldsKeysIncluded = null;
+                        int numRecords = 0;
+                        string[] tableData = null;
+
+                        int tableRet = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
+                            ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                        if (tableRet == 0 && numRecords > 0 && fieldsKeysIncluded != null && tableData != null)
+                        {
+                            availableTables.Add((tableKey, tableName, numRecords, fieldsKeysIncluded, tableData));
+                            reportSb.AppendLine($"  ✓ {tableKey}: {numRecords} record(s)");
+                        }
                     }
                 }
 
                 if (availableTables.Count == 0)
                 {
+                    // No priority tables found, list all available table names for debugging
+                    reportSb.AppendLine("\r\n⚠ No material/object/connectivity tables found with data.");
+                    reportSb.AppendLine("\r\nAll available tables in model:");
+                    for (int i = 0; i < Math.Min(20, numTables); i++)
+                    {
+                        reportSb.AppendLine($"  - {tableKeys[i]}");
+                    }
+                    if (numTables > 20)
+                    {
+                        reportSb.AppendLine($"  ... and {numTables - 20} more");
+                    }
+
                     csvData = "";
-                    report = "ERROR: No database tables with data were found.\n\n" +
+                    report = reportSb.ToString() +
+                            "\n\nERROR: No suitable tables with data were found.\n\n" +
                             "Possible reasons:\n" +
-                            "1. The model has no objects (frames, areas, etc.)\n" +
+                            "1. Model has no objects (frames, areas, etc.)\n" +
                             "2. Materials are not assigned to objects\n" +
-                            "3. Analysis has not been run\n\n" +
-                            $"Tried {tableKeysToTry.Length} common table names.\n\n" +
-                            "Note: You can view available tables in Display > Show Tables";
+                            "3. Table names in this ETABS version don't match expected patterns\n\n" +
+                            "Note: You can view tables manually in ETABS: Display > Show Tables";
                     return false;
                 }
 
-                // Extract the first available table with the most records
+                // Step 3: Extract the table with the most records
                 var selectedTable = availableTables.OrderByDescending(t => t.recordCount).First();
 
+                reportSb.AppendLine($"\r\n✓ Extracting table with most data: {selectedTable.tableKey}");
+                reportSb.AppendLine($"  Records: {selectedTable.recordCount}, Fields: {selectedTable.fields.Length}");
+
                 var csv = new StringBuilder();
-                csv.AppendLine($"# Table: {selectedTable.tableName}");
+                csv.AppendLine($"# Table: {selectedTable.tableKey}");
+                csv.AppendLine($"# Display Name: {selectedTable.tableName}");
                 csv.AppendLine($"# Records: {selectedTable.recordCount}");
-                csv.AppendLine($"# Note: {availableTables.Count} total table(s) available in model");
+                csv.AppendLine($"# Note: {availableTables.Count} data-rich table(s) found in model");
                 csv.AppendLine();
 
                 // Add header row
@@ -1384,11 +1407,11 @@ namespace ETABS_Plugin
                         int index = i * numFields + j;
                         if (index < selectedTable.data.Length)
                         {
-                            // Escape commas in data
+                            // Escape commas and quotes in data
                             string value = selectedTable.data[index];
-                            if (value.Contains(","))
+                            if (value.Contains(",") || value.Contains("\""))
                             {
-                                value = $"\"{value}\"";
+                                value = $"\"{value.Replace("\"", "\"\"")}\"";
                             }
                             rowData.Add(value);
                         }
@@ -1398,14 +1421,14 @@ namespace ETABS_Plugin
 
                 csvData = csv.ToString();
 
-                var reportSb = new StringBuilder();
-                reportSb.AppendLine($"✓ Successfully extracted '{selectedTable.tableName}'");
-                reportSb.AppendLine($"  Records: {selectedTable.recordCount}, Fields: {numFields}");
+                // Final report
+                reportSb.AppendLine($"\r\n✓ Successfully extracted '{selectedTable.tableKey}'");
+                reportSb.AppendLine($"  CSV size: {csv.Length} characters");
                 reportSb.AppendLine();
-                reportSb.AppendLine($"Found {availableTables.Count} available table(s) in total:");
+                reportSb.AppendLine($"All available data-rich tables ({availableTables.Count} total):");
                 foreach (var table in availableTables.OrderByDescending(t => t.recordCount))
                 {
-                    reportSb.AppendLine($"  - {table.tableName} ({table.recordCount} records)");
+                    reportSb.AppendLine($"  - {table.tableKey}: {table.recordCount} records");
                 }
 
                 report = reportSb.ToString();
@@ -1614,68 +1637,92 @@ namespace ETABS_Plugin
                 }
                 sb.AppendLine();
 
-                // Check available database tables
+                // Check available database tables using dynamic discovery
                 sb.AppendLine("--- AVAILABLE DATABASE TABLES ---");
                 sb.AppendLine("  NOTE: Database tables are generated automatically by ETABS");
                 sb.AppendLine("  They should be available once the model has objects/materials");
                 sb.AppendLine();
                 try
                 {
-                    // Use comprehensive list
-                    string[] tableKeys = new string[]
+                    // Use GetAvailableTables API to discover all tables dynamically
+                    int numTables = 0;
+                    string[] tableKeys = null;
+                    string[] tableNames = null;
+                    int[] importTypes = null;
+
+                    int ret = _SapModel.DatabaseTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
+
+                    if (ret == 0 && numTables > 0)
                     {
-                        "Material List 2 - By Object Type",
-                        "Material List - By Object Type",
-                        "Material List 2",
-                        "Material List 1 - By Object Type",
-                        "Material Properties 02 - Basic Mechanical Properties",
-                        "Objects and Elements - Summary",
-                        "Objects and Elements - Frames",
-                        "Objects and Elements - Areas",
-                        "Connectivity - Frame",
-                        "Connectivity - Area",
-                        "Frame Section Properties 01 - General",
-                        "Area Section Properties",
-                        "Load Pattern Definitions",
-                        "Modal Periods And Frequencies",
-                        "Base Reactions"
-                    };
-
-                    int availableCount = 0;
-                    foreach (string tableKey in tableKeys)
-                    {
-                        string[] fkl = null;
-                        int tv = 0;
-                        string[] fki = null;
-                        int nr = 0;
-                        string[] td = null;
-
-                        int ret = _SapModel.DatabaseTables.GetTableForDisplayArray(tableKey, ref fkl, "",
-                            ref tv, ref fki, ref nr, ref td);
-
-                        if (ret == 0 && nr > 0)
-                        {
-                            sb.AppendLine($"  ✓ {tableKey} ({nr} records)");
-                            availableCount++;
-                        }
-                    }
-
-                    if (availableCount > 0)
-                    {
+                        sb.AppendLine($"  ✓ Found {numTables} database table(s) total");
                         sb.AppendLine();
-                        sb.AppendLine($"  Total: {availableCount} table(s) available");
+
+                        // Categorize tables
+                        var materialTables = new List<string>();
+                        var objectTables = new List<string>();
+                        var analysisTables = new List<string>();
+                        var otherTables = new List<string>();
+
+                        for (int i = 0; i < numTables; i++)
+                        {
+                            string keyUpper = tableKeys[i].ToUpperInvariant();
+
+                            if (keyUpper.Contains("MATERIAL"))
+                                materialTables.Add(tableKeys[i]);
+                            else if (keyUpper.Contains("OBJECT") || keyUpper.Contains("ELEMENT") ||
+                                     keyUpper.Contains("CONNECTIVITY") || keyUpper.Contains("SECTION"))
+                                objectTables.Add(tableKeys[i]);
+                            else if (keyUpper.Contains("MODAL") || keyUpper.Contains("REACTION") ||
+                                     keyUpper.Contains("DRIFT") || keyUpper.Contains("FORCE"))
+                                analysisTables.Add(tableKeys[i]);
+                            else
+                                otherTables.Add(tableKeys[i]);
+                        }
+
+                        if (materialTables.Count > 0)
+                        {
+                            sb.AppendLine($"  Material Tables ({materialTables.Count}):");
+                            foreach (var tbl in materialTables.Take(5))
+                                sb.AppendLine($"    - {tbl}");
+                            if (materialTables.Count > 5)
+                                sb.AppendLine($"    ... and {materialTables.Count - 5} more");
+                            sb.AppendLine();
+                        }
+
+                        if (objectTables.Count > 0)
+                        {
+                            sb.AppendLine($"  Object/Element Tables ({objectTables.Count}):");
+                            foreach (var tbl in objectTables.Take(5))
+                                sb.AppendLine($"    - {tbl}");
+                            if (objectTables.Count > 5)
+                                sb.AppendLine($"    ... and {objectTables.Count - 5} more");
+                            sb.AppendLine();
+                        }
+
+                        if (analysisTables.Count > 0)
+                        {
+                            sb.AppendLine($"  Analysis Result Tables ({analysisTables.Count}):");
+                            foreach (var tbl in analysisTables.Take(5))
+                                sb.AppendLine($"    - {tbl}");
+                            if (analysisTables.Count > 5)
+                                sb.AppendLine($"    ... and {analysisTables.Count - 5} more");
+                            sb.AppendLine();
+                        }
+
+                        sb.AppendLine($"  ✓ Database tables are available and ready for extraction");
+                    }
+                    else if (ret != 0)
+                    {
+                        sb.AppendLine($"  ✗ Failed to get table list (error code: {ret})");
                     }
                     else
                     {
-                        sb.AppendLine();
-                        sb.AppendLine("  If ALL tables show 'not available', this is usually because:");
-                        sb.AppendLine("  - ETABS table names may differ in this version");
-                        sb.AppendLine("  - You can view actual table names via Display > Show Tables in ETABS");
+                        sb.AppendLine("  ⚠ No database tables found - model may be empty");
                     }
                 }
                 catch (Exception ex)
                 {
-                    sb.AppendLine($"  Error checking tables: {ex.Message}");
+                    sb.AppendLine($"  ✗ Error checking tables: {ex.Message}");
                 }
                 sb.AppendLine();
 
