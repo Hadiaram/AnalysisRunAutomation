@@ -6,6 +6,7 @@
 *.suo
 *.vcxproj.user
 **/Debug/
+READNE.md
 
 # --- Visual Studio / MSBuild misc ---
 *.cache
