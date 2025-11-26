@@ -609,13 +609,19 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting wall element information...\r\n");
 
-                // Get all area objects
-                int numberNames = 0;
-                string[] names = Array.Empty<string>();
-                string[] labels = Array.Empty<string>();
-                string[] stories = Array.Empty<string>();
+                // Save current units and set to kN-m-C for consistent extraction
+                eUnits originalUnits = _SapModel.GetPresentUnits();
+                _SapModel.SetPresentUnits(eUnits.kN_m_C);
 
-                int ret = _SapModel.AreaObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
+                try
+                {
+                    // Get all area objects
+                    int numberNames = 0;
+                    string[] names = Array.Empty<string>();
+                    string[] labels = Array.Empty<string>();
+                    string[] stories = Array.Empty<string>();
+
+                    int ret = _SapModel.AreaObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
 
                 if (ret != 0)
                 {
@@ -692,7 +698,7 @@ namespace ETABS_Plugin
                     double centroidY = sumY / numPoints;
                     double centroidZ = sumZ / numPoints;
 
-                    // Convert thickness to mm
+                    // Convert thickness from meters to mm (units are set to kN-m-C above)
                     double thicknessMm = thickness * 1000;
 
                     // Get pier label assignment
@@ -747,18 +753,24 @@ namespace ETABS_Plugin
                 reportSb.AppendLine($"  - Spandrel Walls: {spandrelCount}");
                 reportSb.AppendLine($"  - Gravity/Partition Walls: {gravityWallCount}");
 
-                if (wallCount > 0)
-                {
-                    reportSb.AppendLine("\r\n✓ Wall elements extracted successfully");
-                    csvData = sb.ToString();
-                    report = reportSb.ToString();
-                    return true;
+                    if (wallCount > 0)
+                    {
+                        reportSb.AppendLine("\r\n✓ Wall elements extracted successfully");
+                        csvData = sb.ToString();
+                        report = reportSb.ToString();
+                        return true;
+                    }
+                    else
+                    {
+                        csvData = "";
+                        report = reportSb.ToString() + "\r\n✗ No wall elements found";
+                        return false;
+                    }
                 }
-                else
+                finally
                 {
-                    csvData = "";
-                    report = reportSb.ToString() + "\r\n✗ No wall elements found";
-                    return false;
+                    // Restore original units
+                    _SapModel.SetPresentUnits(originalUnits);
                 }
             }
             catch (Exception ex)
@@ -781,13 +793,19 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting column element information...\r\n");
 
-                // Get all frame objects
-                int numberNames = 0;
-                string[] names = Array.Empty<string>();
-                string[] labels = Array.Empty<string>();
-                string[] stories = Array.Empty<string>();
+                // Save current units and set to kN-m-C for consistent extraction
+                eUnits originalUnits = _SapModel.GetPresentUnits();
+                _SapModel.SetPresentUnits(eUnits.kN_m_C);
 
-                int ret = _SapModel.FrameObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
+                try
+                {
+                    // Get all frame objects
+                    int numberNames = 0;
+                    string[] names = Array.Empty<string>();
+                    string[] labels = Array.Empty<string>();
+                    string[] stories = Array.Empty<string>();
+
+                    int ret = _SapModel.FrameObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
 
                 if (ret != 0)
                 {
@@ -861,7 +879,7 @@ namespace ETABS_Plugin
                     double topY = z1 > z2 ? y1 : y2;
                     double topZ = Math.Max(z1, z2);
 
-                    // Convert dimensions to mm
+                    // Convert dimensions from meters to mm (units are set to kN-m-C above)
                     double t2Mm = t2 * 1000;
                     double t3Mm = t3 * 1000;
 
@@ -873,20 +891,26 @@ namespace ETABS_Plugin
                     columnCount++;
                 }
 
-                reportSb.AppendLine($"✓ Successfully extracted {columnCount} column element(s)");
+                    reportSb.AppendLine($"✓ Successfully extracted {columnCount} column element(s)");
 
-                if (columnCount > 0)
-                {
-                    reportSb.AppendLine("\r\n✓ Column elements extracted successfully");
-                    csvData = sb.ToString();
-                    report = reportSb.ToString();
-                    return true;
+                    if (columnCount > 0)
+                    {
+                        reportSb.AppendLine("\r\n✓ Column elements extracted successfully");
+                        csvData = sb.ToString();
+                        report = reportSb.ToString();
+                        return true;
+                    }
+                    else
+                    {
+                        csvData = "";
+                        report = reportSb.ToString() + "\r\n✗ No column elements found";
+                        return false;
+                    }
                 }
-                else
+                finally
                 {
-                    csvData = "";
-                    report = reportSb.ToString() + "\r\n✗ No column elements found";
-                    return false;
+                    // Restore original units
+                    _SapModel.SetPresentUnits(originalUnits);
                 }
             }
             catch (Exception ex)
