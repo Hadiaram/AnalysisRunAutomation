@@ -526,6 +526,154 @@ namespace ETABS_Plugin
 
         #region Element Geometry and Location Extraction
 
+        // Helper class to represent an opening
+        private class OpeningInfo
+        {
+            public string Name { get; set; }
+            public string Story { get; set; }
+            public double CentroidX { get; set; }
+            public double CentroidY { get; set; }
+            public double CentroidZ { get; set; }
+            public double MinX { get; set; }
+            public double MaxX { get; set; }
+            public double MinY { get; set; }
+            public double MaxY { get; set; }
+            public double Width { get; set; }
+            public double Height { get; set; }
+        }
+
+        /// <summary>
+        /// Extracts openings from the model that are >= 2m x 2m
+        /// </summary>
+        private List<OpeningInfo> ExtractLargeOpenings()
+        {
+            var openings = new List<OpeningInfo>();
+            const double MIN_OPENING_SIZE = 2.0; // 2 meters
+
+            try
+            {
+                // Get all area objects
+                int numberNames = 0;
+                string[] names = Array.Empty<string>();
+                string[] labels = Array.Empty<string>();
+                string[] stories = Array.Empty<string>();
+
+                int ret = _SapModel.AreaObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
+                if (ret != 0) return openings;
+
+                // Check each area object to see if it's an opening
+                for (int i = 0; i < numberNames; i++)
+                {
+                    string name = names[i];
+                    string story = stories[i];
+
+                    // Get property
+                    string propName = "";
+                    ret = _SapModel.AreaObj.GetProperty(name, ref propName);
+                    if (ret != 0 || string.IsNullOrEmpty(propName)) continue;
+
+                    // Check if it's an opening property
+                    // Try GetOpening - if it succeeds, it's an opening
+                    int color = 0;
+                    string notes = "";
+                    string guid = "";
+                    ret = _SapModel.PropArea.GetOpening(propName, ref color, ref notes, ref guid);
+
+                    if (ret != 0) continue; // Not an opening, skip
+
+                    // Get points to calculate dimensions
+                    int numPoints = 0;
+                    string[] points = Array.Empty<string>();
+                    ret = _SapModel.AreaObj.GetPoints(name, ref numPoints, ref points);
+                    if (ret != 0 || numPoints == 0) continue;
+
+                    // Get coordinates of all points
+                    double sumX = 0, sumY = 0, sumZ = 0;
+                    double minX = double.MaxValue, maxX = double.MinValue;
+                    double minY = double.MaxValue, maxY = double.MinValue;
+
+                    for (int j = 0; j < numPoints; j++)
+                    {
+                        double x = 0, y = 0, z = 0;
+                        ret = _SapModel.PointObj.GetCoordCartesian(points[j], ref x, ref y, ref z);
+                        if (ret == 0)
+                        {
+                            sumX += x;
+                            sumY += y;
+                            sumZ += z;
+                            minX = Math.Min(minX, x);
+                            maxX = Math.Max(maxX, x);
+                            minY = Math.Min(minY, y);
+                            maxY = Math.Max(maxY, y);
+                        }
+                    }
+
+                    // Calculate dimensions (in meters, since units are kN-m-C)
+                    double width = maxX - minX;
+                    double height = maxY - minY;
+
+                    // Only include openings that are >= 2m x 2m
+                    if (width >= MIN_OPENING_SIZE && height >= MIN_OPENING_SIZE)
+                    {
+                        openings.Add(new OpeningInfo
+                        {
+                            Name = name,
+                            Story = story,
+                            CentroidX = sumX / numPoints,
+                            CentroidY = sumY / numPoints,
+                            CentroidZ = sumZ / numPoints,
+                            MinX = minX,
+                            MaxX = maxX,
+                            MinY = minY,
+                            MaxY = maxY,
+                            Width = width,
+                            Height = height
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // If there's an error, return whatever openings we found
+                return openings;
+            }
+
+            return openings;
+        }
+
+        /// <summary>
+        /// Determines if a wall is around a large opening (core wall logic)
+        /// A wall is considered "around" an opening if:
+        /// 1. They are on the same story
+        /// 2. The wall's bounding box is within proximity to the opening's bounding box
+        /// </summary>
+        private bool IsWallAroundOpening(string wallStory, double wallMinX, double wallMaxX,
+            double wallMinY, double wallMaxY, List<OpeningInfo> openings)
+        {
+            const double PROXIMITY_THRESHOLD = 3.0; // 3 meters proximity threshold
+
+            foreach (var opening in openings)
+            {
+                // Check if on same story
+                if (!string.Equals(wallStory, opening.Story, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Check if wall is near the opening using bounding box proximity
+                // A wall is "around" an opening if any part of it is within the proximity threshold
+                bool isNearInX = (wallMinX <= opening.MaxX + PROXIMITY_THRESHOLD) &&
+                                 (wallMaxX >= opening.MinX - PROXIMITY_THRESHOLD);
+                bool isNearInY = (wallMinY <= opening.MaxY + PROXIMITY_THRESHOLD) &&
+                                 (wallMaxY >= opening.MinY - PROXIMITY_THRESHOLD);
+
+                if (isNearInX && isNearInY)
+                {
+                    return true; // Wall is around this opening
+                }
+            }
+
+            return false; // Wall is not around any large opening
+        }
+
         /// <summary>
         /// Extracts wall/shear wall elements with dimensions and location
         /// </summary>
@@ -547,6 +695,11 @@ namespace ETABS_Plugin
 
                 try
                 {
+                    // First, extract all large openings (>= 2m x 2m)
+                    progressCallback?.Invoke(0, 100, "Identifying large openings...");
+                    var largeOpenings = ExtractLargeOpenings();
+                    reportSb.AppendLine($"✓ Found {largeOpenings.Count} large opening(s) (>= 2m x 2m)");
+
                     // Get all area objects
                     int numberNames = 0;
                     string[] names = Array.Empty<string>();
@@ -564,14 +717,15 @@ namespace ETABS_Plugin
 
                 reportSb.AppendLine($"✓ Found {numberNames} area object(s)");
 
-                // CSV Header
-                sb.AppendLine("Name,Label,Story,PropertyName,WallType,Thickness(mm),PierLabel,SpandrelLabel,WallFunction,CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
+                // CSV Header - Added CoreOrShear column
+                sb.AppendLine("Name,Label,Story,PropertyName,WallType,Thickness(mm),PierLabel,SpandrelLabel,WallFunction,CoreOrShear,CentroidX,CentroidY,CentroidZ,MinX,MaxX,MinY,MaxY");
 
                 // Extract data for each area object
                 int wallCount = 0;
                 int shearWallCount = 0;
                 int spandrelCount = 0;
                 int gravityWallCount = 0;
+                int coreWallCount = 0;
 
                 // Report initial progress
                 progressCallback?.Invoke(0, numberNames, "Starting wall extraction...");
@@ -661,6 +815,16 @@ namespace ETABS_Plugin
                     // Convert wall property type to readable string
                     string wallTypeStr = wallPropType.ToString();
 
+                    // Determine if wall is core or shear based on proximity to large openings
+                    string coreOrShear = IsWallAroundOpening(story, minX, maxX, minY, maxY, largeOpenings)
+                        ? "Core Wall"
+                        : "Shear Wall";
+
+                    if (coreOrShear == "Core Wall")
+                    {
+                        coreWallCount++;
+                    }
+
                     // Determine wall function based on pier/spandrel assignment
                     string wallFunction;
                     if (pierLabel != "None")
@@ -681,7 +845,7 @@ namespace ETABS_Plugin
 
                     sb.AppendLine($"\"{name}\",\"{label}\",\"{story}\",\"{propName}\"," +
                         $"\"{wallTypeStr}\",{thicknessMm:0.00}," +
-                        $"\"{pierLabel}\",\"{spandrelLabel}\",\"{wallFunction}\"," +
+                        $"\"{pierLabel}\",\"{spandrelLabel}\",\"{wallFunction}\",\"{coreOrShear}\"," +
                         $"{centroidX:0.0000},{centroidY:0.0000},{centroidZ:0.0000}," +
                         $"{minX:0.0000},{maxX:0.0000},{minY:0.0000},{maxY:0.0000}");
                     wallCount++;
@@ -692,7 +856,11 @@ namespace ETABS_Plugin
 
                 reportSb.AppendLine($"✓ Successfully extracted {wallCount} wall element(s)");
                 reportSb.AppendLine();
-                reportSb.AppendLine("Wall Classification Breakdown:");
+                reportSb.AppendLine("Wall Type Breakdown (Core vs Shear):");
+                reportSb.AppendLine($"  - Core Walls (around large openings): {coreWallCount}");
+                reportSb.AppendLine($"  - Shear Walls: {wallCount - coreWallCount}");
+                reportSb.AppendLine();
+                reportSb.AppendLine("Wall Function Breakdown:");
                 reportSb.AppendLine($"  - Shear Walls/Cores: {shearWallCount}");
                 reportSb.AppendLine($"  - Spandrel Walls: {spandrelCount}");
                 reportSb.AppendLine($"  - Gravity/Partition Walls: {gravityWallCount}");
