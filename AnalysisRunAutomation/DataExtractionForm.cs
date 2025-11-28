@@ -971,7 +971,7 @@ namespace ETABS_Plugin
             progressBar.Visible = true;
             lblProgress.Visible = true;
             lblProgress.Text = "0%";
-            Application.DoEvents();
+            progressBar.Refresh();
         }
 
         /// <summary>
@@ -996,7 +996,9 @@ namespace ETABS_Plugin
                 else
                     lblProgress.Text = $"{percentage}% - {message}";
 
-                Application.DoEvents();
+                // Force immediate visual update without processing all messages
+                progressBar.Refresh();
+                lblProgress.Refresh();
             }
         }
 
@@ -1014,7 +1016,6 @@ namespace ETABS_Plugin
             progressBar.Visible = false;
             lblProgress.Visible = false;
             lblProgress.Text = "";
-            Application.DoEvents();
         }
 
         #endregion
