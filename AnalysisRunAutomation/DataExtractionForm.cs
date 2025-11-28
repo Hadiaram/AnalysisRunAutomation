@@ -69,7 +69,11 @@ namespace ETABS_Plugin
                     {
                         txtStatus.AppendText($"Extracting all data to: {folderDialog.SelectedPath}\r\n\r\n");
 
-                        if (_ExtractionManager.ExtractAllData(folderDialog.SelectedPath, out string report))
+                        // Show progress bar
+                        ShowProgress(14);
+
+                        if (_ExtractionManager.ExtractAllData(folderDialog.SelectedPath, out string report,
+                            (current, total, message) => UpdateProgress(current, total, message)))
                         {
                             txtStatus.AppendText(report);
                             txtStatus.AppendText("\r\n");
@@ -98,6 +102,7 @@ namespace ETABS_Plugin
             }
             finally
             {
+                HideProgress();
                 Cursor = Cursors.Default;
             }
         }
@@ -469,8 +474,12 @@ namespace ETABS_Plugin
                 Cursor = Cursors.WaitCursor;
                 txtStatus.AppendText("=== EXTRACTING WALL ELEMENTS ===\r\n");
 
-                // Extract data
-                if (_ExtractionManager.ExtractWallElements(out string csvData, out string report))
+                // Show progress bar
+                ShowProgress();
+
+                // Extract data with progress callback
+                if (_ExtractionManager.ExtractWallElements(out string csvData, out string report,
+                    (current, total, message) => UpdateProgress(current, total, message)))
                 {
                     txtStatus.AppendText(report);
 
@@ -518,6 +527,7 @@ namespace ETABS_Plugin
             }
             finally
             {
+                HideProgress();
                 Cursor = Cursors.Default;
             }
         }
@@ -941,5 +951,72 @@ namespace ETABS_Plugin
             txtStatus.Clear();
             txtStatus.AppendText("Status cleared\r\n\r\n");
         }
+
+        #region Progress Bar Helpers
+
+        /// <summary>
+        /// Shows and initializes the progress bar
+        /// </summary>
+        private void ShowProgress(int maximum = 100)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ShowProgress(maximum)));
+                return;
+            }
+
+            progressBar.Minimum = 0;
+            progressBar.Maximum = maximum;
+            progressBar.Value = 0;
+            progressBar.Visible = true;
+            lblProgress.Visible = true;
+            lblProgress.Text = "0%";
+            Application.DoEvents();
+        }
+
+        /// <summary>
+        /// Updates progress bar value and text
+        /// </summary>
+        private void UpdateProgress(int current, int total, string message = "")
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => UpdateProgress(current, total, message)));
+                return;
+            }
+
+            if (total > 0)
+            {
+                int percentage = (int)((double)current / total * 100);
+                progressBar.Maximum = total;
+                progressBar.Value = Math.Min(current, total);
+
+                if (string.IsNullOrEmpty(message))
+                    lblProgress.Text = $"{percentage}% ({current}/{total})";
+                else
+                    lblProgress.Text = $"{percentage}% - {message}";
+
+                Application.DoEvents();
+            }
+        }
+
+        /// <summary>
+        /// Hides the progress bar
+        /// </summary>
+        private void HideProgress()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(HideProgress));
+                return;
+            }
+
+            progressBar.Visible = false;
+            lblProgress.Visible = false;
+            lblProgress.Text = "";
+            Application.DoEvents();
+        }
+
+        #endregion
     }
 }

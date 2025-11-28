@@ -51,6 +51,8 @@ namespace ETABS_Plugin
             txtStatus = new System.Windows.Forms.TextBox();
             lblStatus = new System.Windows.Forms.Label();
             btnClearStatus = new System.Windows.Forms.Button();
+            progressBar = new System.Windows.Forms.ProgressBar();
+            lblProgress = new System.Windows.Forms.Label();
             grpExtractionOptions.SuspendLayout();
             scrollablePanel.SuspendLayout();
             SuspendLayout();
@@ -336,11 +338,33 @@ namespace ETABS_Plugin
             btnClearStatus.UseVisualStyleBackColor = true;
             btnClearStatus.Click += btnClearStatus_Click;
             //
+            // progressBar
+            //
+            progressBar.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            progressBar.Location = new System.Drawing.Point(60, 502);
+            progressBar.Name = "progressBar";
+            progressBar.Size = new System.Drawing.Size(324, 18);
+            progressBar.TabIndex = 5;
+            progressBar.Visible = false;
+            //
+            // lblProgress
+            //
+            lblProgress.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            lblProgress.AutoSize = true;
+            lblProgress.Location = new System.Drawing.Point(12, 505);
+            lblProgress.Name = "lblProgress";
+            lblProgress.Size = new System.Drawing.Size(42, 15);
+            lblProgress.TabIndex = 6;
+            lblProgress.Text = "";
+            lblProgress.Visible = false;
+            //
             // DataExtractionForm
             //
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(484, 685);
+            Controls.Add(lblProgress);
+            Controls.Add(progressBar);
             Controls.Add(btnClearStatus);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
@@ -385,5 +409,7 @@ namespace ETABS_Plugin
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Button btnClearStatus;
+        private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.Label lblProgress;
     }
 }

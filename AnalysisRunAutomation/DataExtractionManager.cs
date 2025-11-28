@@ -600,7 +600,10 @@ namespace ETABS_Plugin
         /// <summary>
         /// Extracts wall/shear wall elements with dimensions and location
         /// </summary>
-        public bool ExtractWallElements(out string csvData, out string report)
+        /// <param name="csvData">Output CSV data</param>
+        /// <param name="report">Output status report</param>
+        /// <param name="progressCallback">Optional callback for progress updates (current, total, message)</param>
+        public bool ExtractWallElements(out string csvData, out string report, Action<int, int, string> progressCallback = null)
         {
             var sb = new StringBuilder();
             var reportSb = new StringBuilder();
@@ -641,8 +644,17 @@ namespace ETABS_Plugin
                 int spandrelCount = 0;
                 int gravityWallCount = 0;
 
+                // Report initial progress
+                progressCallback?.Invoke(0, numberNames, "Starting wall extraction...");
+
                 for (int i = 0; i < numberNames; i++)
                 {
+                    // Report progress every 10 objects or for the last one
+                    if (i % 10 == 0 || i == numberNames - 1)
+                    {
+                        progressCallback?.Invoke(i + 1, numberNames, $"Processing area object {i + 1}/{numberNames}");
+                    }
+
                     string name = names[i];
                     string label = labels[i];
                     string story = stories[i];
@@ -745,6 +757,9 @@ namespace ETABS_Plugin
                         $"{minX:0.0000},{maxX:0.0000},{minY:0.0000},{maxY:0.0000}");
                     wallCount++;
                 }
+
+                // Report completion
+                progressCallback?.Invoke(numberNames, numberNames, $"Completed - found {wallCount} walls");
 
                 reportSb.AppendLine($"✓ Successfully extracted {wallCount} wall element(s)");
                 reportSb.AppendLine();
@@ -1765,7 +1780,10 @@ namespace ETABS_Plugin
         /// <summary>
         /// Extracts all available data types to a specified folder
         /// </summary>
-        public bool ExtractAllData(string outputFolder, out string report)
+        /// <param name="outputFolder">Folder to save extraction files</param>
+        /// <param name="report">Output status report</param>
+        /// <param name="progressCallback">Optional callback for progress updates (current, total, message)</param>
+        public bool ExtractAllData(string outputFolder, out string report, Action<int, int, string> progressCallback = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine("=== EXTRACTING ALL DATA ===\n");
@@ -1773,12 +1791,19 @@ namespace ETABS_Plugin
             int successCount = 0;
             int failCount = 0;
             int skipCount = 0;
+            int currentStep = 0;
+            const int totalSteps = 14;
 
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
             try
             {
+                // Report initial progress
+                progressCallback?.Invoke(0, totalSteps, "Starting extraction...");
+
                 // 1. Base Reactions
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting base reactions...");
                 sb.AppendLine("1. Base Reactions...");
                 if (ExtractBaseReactions(out string csvData, out string result))
                 {
@@ -1801,6 +1826,8 @@ namespace ETABS_Plugin
                 }
 
                 // 2. Project Info
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting project information...");
                 sb.AppendLine("2. Project/Model Information...");
                 if (ExtractProjectInfo(out csvData, out result))
                 {
@@ -1823,6 +1850,8 @@ namespace ETABS_Plugin
                 }
 
                 // 3. Story Info
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting story information...");
                 sb.AppendLine("3. Story/Level Information...");
                 if (ExtractStoryInfo(out csvData, out result))
                 {
@@ -1845,6 +1874,8 @@ namespace ETABS_Plugin
                 }
 
                 // 4. Grid Info
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting grid information...");
                 sb.AppendLine("4. Grid System Information...");
                 if (ExtractGridInfo(out csvData, out result))
                 {
@@ -1867,6 +1898,8 @@ namespace ETABS_Plugin
                 }
 
                 // 5. Frame Modifiers
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting frame modifiers...");
                 sb.AppendLine("5. Frame Property Modifiers...");
                 if (ExtractFrameModifiers(out csvData, out result))
                 {
@@ -1889,6 +1922,8 @@ namespace ETABS_Plugin
                 }
 
                 // 6. Area Modifiers
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting area modifiers...");
                 sb.AppendLine("6. Area Property Modifiers...");
                 if (ExtractAreaModifiers(out csvData, out result))
                 {
@@ -1911,6 +1946,8 @@ namespace ETABS_Plugin
                 }
 
                 // 7. Wall Elements
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting wall elements...");
                 sb.AppendLine("7. Wall Elements...");
                 if (ExtractWallElements(out csvData, out result))
                 {
@@ -1933,6 +1970,8 @@ namespace ETABS_Plugin
                 }
 
                 // 8. Column Elements
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting column elements...");
                 sb.AppendLine("8. Column Elements...");
                 if (ExtractColumnElements(out csvData, out result))
                 {
@@ -1955,6 +1994,8 @@ namespace ETABS_Plugin
                 }
 
                 // 9. Modal Periods
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting modal periods...");
                 sb.AppendLine("9. Modal Periods...");
                 if (ExtractModalPeriods(out csvData, out result))
                 {
@@ -1977,6 +2018,8 @@ namespace ETABS_Plugin
                 }
 
                 // 10. Modal Mass Ratios
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting modal mass ratios...");
                 sb.AppendLine("10. Modal Participating Mass Ratios...");
                 if (ExtractModalMassRatios(out csvData, out result))
                 {
@@ -1999,6 +2042,8 @@ namespace ETABS_Plugin
                 }
 
                 // 11. Story Drifts
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting story drifts...");
                 sb.AppendLine("11. Story Drifts...");
                 if (ExtractStoryDrifts(out csvData, out result))
                 {
@@ -2021,6 +2066,8 @@ namespace ETABS_Plugin
                 }
 
                 // 12. Base Shear
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting base shear...");
                 sb.AppendLine("12. Base Shear...");
                 if (ExtractBaseShear(out csvData, out result))
                 {
@@ -2043,6 +2090,8 @@ namespace ETABS_Plugin
                 }
 
                 // 13. Composite Column Design (might not apply)
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting composite column design...");
                 sb.AppendLine("13. Composite Column Design...");
                 if (ExtractCompositeColumnDesign(out csvData, out result))
                 {
@@ -2065,6 +2114,8 @@ namespace ETABS_Plugin
                 }
 
                 // 14. Quantities Summary (might not work due to table names)
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting quantities summary...");
                 sb.AppendLine("14. Quantities Summary...");
                 if (ExtractQuantitiesSummary(out csvData, out result))
                 {
