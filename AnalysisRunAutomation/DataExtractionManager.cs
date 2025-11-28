@@ -545,10 +545,12 @@ namespace ETABS_Plugin
         /// <summary>
         /// Extracts openings from the model that are >= 2m x 2m
         /// </summary>
-        private List<OpeningInfo> ExtractLargeOpenings()
+        private List<OpeningInfo> ExtractLargeOpenings(StringBuilder diagnosticReport = null)
         {
             var openings = new List<OpeningInfo>();
             const double MIN_OPENING_SIZE = 2.0; // 2 meters
+            int totalOpeningsFound = 0;
+            int tooSmallCount = 0;
 
             try
             {
@@ -580,6 +582,8 @@ namespace ETABS_Plugin
                     ret = _SapModel.PropArea.GetOpening(propName, ref color, ref notes, ref guid);
 
                     if (ret != 0) continue; // Not an opening, skip
+
+                    totalOpeningsFound++;
 
                     // Get points to calculate dimensions
                     int numPoints = 0;
@@ -629,8 +633,17 @@ namespace ETABS_Plugin
                             Width = width,
                             Height = height
                         });
+
+                        diagnosticReport?.AppendLine($"    Opening '{name}' on '{story}': {width:F2}m x {height:F2}m at ({sumX/numPoints:F2}, {sumY/numPoints:F2})");
+                    }
+                    else
+                    {
+                        tooSmallCount++;
+                        diagnosticReport?.AppendLine($"    Opening '{name}' on '{story}': TOO SMALL {width:F2}m x {height:F2}m (need >= 2m x 2m)");
                     }
                 }
+
+                diagnosticReport?.AppendLine($"\nOpening Summary: {totalOpeningsFound} total, {openings.Count} large enough, {tooSmallCount} too small");
             }
             catch
             {
@@ -697,8 +710,9 @@ namespace ETABS_Plugin
                 {
                     // First, extract all large openings (>= 2m x 2m)
                     progressCallback?.Invoke(0, 100, "Identifying large openings...");
-                    var largeOpenings = ExtractLargeOpenings();
-                    reportSb.AppendLine($"✓ Found {largeOpenings.Count} large opening(s) (>= 2m x 2m)");
+                    reportSb.AppendLine("Opening Detection Diagnostics:");
+                    var largeOpenings = ExtractLargeOpenings(reportSb);
+                    reportSb.AppendLine($"\n✓ Found {largeOpenings.Count} large opening(s) (>= 2m x 2m)");
 
                     // Get all area objects
                     int numberNames = 0;
@@ -726,6 +740,7 @@ namespace ETABS_Plugin
                 int spandrelCount = 0;
                 int gravityWallCount = 0;
                 int coreWallCount = 0;
+                var coreWallDiagnostics = new StringBuilder();
 
                 // Report initial progress
                 progressCallback?.Invoke(0, numberNames, "Starting wall extraction...");
@@ -823,6 +838,11 @@ namespace ETABS_Plugin
                     if (coreOrShear == "Core Wall")
                     {
                         coreWallCount++;
+                        // Log first 5 core walls for diagnostics
+                        if (coreWallCount <= 5)
+                        {
+                            coreWallDiagnostics.AppendLine($"  Core Wall #{coreWallCount}: '{name}' on '{story}' at ({centroidX:F2}, {centroidY:F2})");
+                        }
                     }
 
                     // Determine wall function based on pier/spandrel assignment
@@ -859,6 +879,25 @@ namespace ETABS_Plugin
                 reportSb.AppendLine("Wall Type Breakdown (Core vs Shear):");
                 reportSb.AppendLine($"  - Core Walls (around large openings): {coreWallCount}");
                 reportSb.AppendLine($"  - Shear Walls: {wallCount - coreWallCount}");
+
+                if (coreWallCount > 0 && coreWallDiagnostics.Length > 0)
+                {
+                    reportSb.AppendLine("\nFirst Core Walls Detected:");
+                    reportSb.Append(coreWallDiagnostics.ToString());
+                }
+                else if (coreWallCount == 0 && largeOpenings.Count > 0)
+                {
+                    reportSb.AppendLine("\n⚠ WARNING: Large openings found but NO core walls detected!");
+                    reportSb.AppendLine("  This may indicate:");
+                    reportSb.AppendLine("  - Walls are too far from openings (>3m proximity threshold)");
+                    reportSb.AppendLine("  - Walls and openings are on different stories (story name mismatch)");
+                    reportSb.AppendLine("  - No walls exist near the openings");
+                }
+                else if (coreWallCount == 0 && largeOpenings.Count == 0)
+                {
+                    reportSb.AppendLine("\n⚠ No large openings (>= 2m x 2m) found - all walls classified as Shear Walls");
+                }
+
                 reportSb.AppendLine();
                 reportSb.AppendLine("Wall Function Breakdown:");
                 reportSb.AppendLine($"  - Shear Walls/Cores: {shearWallCount}");
