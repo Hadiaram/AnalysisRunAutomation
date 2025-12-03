@@ -2337,7 +2337,9 @@ namespace ETABS_Plugin
                 try
                 {
                     // Use cached table list if available, otherwise fetch
-                    if (EnsureTablesListCached() && _cachedNumTables > 0)
+                    bool tablesAvailable = EnsureTablesListCached();
+
+                    if (tablesAvailable && _cachedNumTables > 0)
                     {
                         sb.AppendLine($"  ✓ Found {_cachedNumTables} database table(s) total");
                         sb.AppendLine();
@@ -2396,9 +2398,9 @@ namespace ETABS_Plugin
 
                         sb.AppendLine($"  ✓ Database tables are available and ready for extraction");
                     }
-                    else if (ret != 0)
+                    else if (!tablesAvailable)
                     {
-                        sb.AppendLine($"  ✗ Failed to get table list (error code: {ret})");
+                        sb.AppendLine($"  ✗ Failed to get table list from ETABS API");
                     }
                     else
                     {
