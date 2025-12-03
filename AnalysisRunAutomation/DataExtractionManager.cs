@@ -11,9 +11,49 @@ namespace ETABS_Plugin
     {
         private cSapModel _SapModel;
 
+        // Cached database tables list (populated once per extraction session)
+        private bool _tablesListCached = false;
+        private int _cachedNumTables = 0;
+        private string[] _cachedTableKeys = null;
+        private string[] _cachedTableNames = null;
+        private int[] _cachedImportTypes = null;
+
         public DataExtractionManager(cSapModel sapModel)
         {
             _SapModel = sapModel;
+        }
+
+        /// <summary>
+        /// Ensures the database tables list is cached. Call once at the start of extraction.
+        /// Returns true if successful, false otherwise.
+        /// </summary>
+        private bool EnsureTablesListCached()
+        {
+            if (_tablesListCached) return true;
+
+            int ret = _SapModel.DatabaseTables.GetAvailableTables(
+                ref _cachedNumTables, ref _cachedTableKeys,
+                ref _cachedTableNames, ref _cachedImportTypes);
+
+            if (ret == 0 && _cachedNumTables > 0)
+            {
+                _tablesListCached = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Clears the cached tables list. Call at the start of a new extraction session.
+        /// </summary>
+        private void ClearTablesListCache()
+        {
+            _tablesListCached = false;
+            _cachedNumTables = 0;
+            _cachedTableKeys = null;
+            _cachedTableNames = null;
+            _cachedImportTypes = null;
         }
 
         #region Analysis Results Extraction
@@ -1461,65 +1501,54 @@ namespace ETABS_Plugin
         }
 
         /// <summary>
-        /// Extracts quantities summary using database tables
+        /// Exports ALL database tables to individual CSV files (memory-efficient streaming)
         /// </summary>
-        public bool ExtractQuantitiesSummary(out string csvData, out string report)
+        /// <param name="outputFolder">Folder where table CSV files will be saved</param>
+        /// <param name="timestamp">Timestamp string to use in filenames</param>
+        /// <param name="report">Output status report</param>
+        /// <returns>True if at least one table was exported successfully</returns>
+        public bool ExtractAllDatabaseTables(string outputFolder, string timestamp, out string report)
         {
+            var reportSb = new StringBuilder();
+            int successCount = 0;
+            int failCount = 0;
+            int emptyCount = 0;
+
             try
             {
-                var reportSb = new StringBuilder();
-                cDatabaseTables dbTables = _SapModel.DatabaseTables;
+                reportSb.AppendLine("Exporting all database tables...\r\n");
 
-                // Step 1: Discover all available tables dynamically
-                reportSb.AppendLine("Discovering available database tables...\r\n");
-
-                int numTables = 0;
-                string[] tableKeys = Array.Empty<string>();
-                string[] tableNames = Array.Empty<string>();
-                int[] importTypes = Array.Empty<int>();
-
-                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
-
-                if (ret != 0)
+                // Use cached table list
+                if (!EnsureTablesListCached())
                 {
-                    csvData = "";
                     report = "ERROR: Failed to get available database tables from ETABS API.\n" +
-                            "Return code: " + ret + "\n\n" +
                             "Possible reasons:\n" +
                             "1. ETABS model is locked (File > Unlock Model)\n" +
                             "2. API connection issue";
                     return false;
                 }
 
-                reportSb.AppendLine($"✓ Found {numTables} database table(s) in the model\r\n");
-
-                if (numTables == 0)
+                if (_cachedNumTables == 0)
                 {
-                    csvData = "";
-                    report = reportSb.ToString() +
-                            "\nERROR: No database tables available.\n\n" +
+                    report = "ERROR: No database tables available.\n\n" +
                             "This usually means the model has no objects or data.";
                     return false;
                 }
 
-                // Step 2: Prioritize tables - look for material, object, and connectivity tables
-                reportSb.AppendLine("Searching for data-rich tables...");
+                reportSb.AppendLine($"Found {_cachedNumTables} database table(s) in model");
+                reportSb.AppendLine($"Exporting each table to separate CSV file...\r\n");
 
-                var priorityKeywords = new[] { "MATERIAL", "OBJECT", "ELEMENT", "CONNECTIVITY", "SECTION", "PROPERTY" };
-                var availableTables = new List<(string tableKey, string tableName, int recordCount, string[] fields, string[] data)>();
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                for (int i = 0; i < numTables; i++)
+                // Process each table one at a time (memory-efficient)
+                for (int i = 0; i < _cachedNumTables; i++)
                 {
-                    string tableKey = tableKeys[i];
-                    string tableName = tableNames[i];
-                    string tableKeyUpper = tableKey.ToUpperInvariant();
+                    string tableKey = _cachedTableKeys[i];
+                    string tableName = _cachedTableNames[i];
 
-                    // Check if this table matches our priority keywords
-                    bool isPriority = priorityKeywords.Any(kw => tableKeyUpper.Contains(kw));
-
-                    if (isPriority)
+                    try
                     {
-                        // Try to get data from this table
+                        // Get table data
                         string[] fieldKeyList = null;
                         string groupName = "";
                         int tableVersion = 0;
@@ -1527,99 +1556,106 @@ namespace ETABS_Plugin
                         int numRecords = 0;
                         string[] tableData = null;
 
-                        int tableRet = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
+                        int ret = dbTables.GetTableForDisplayArray(tableKey, ref fieldKeyList, groupName,
                             ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
 
-                        if (tableRet == 0 && numRecords > 0 && fieldsKeysIncluded != null && tableData != null)
+                        if (ret != 0)
                         {
-                            availableTables.Add((tableKey, tableName, numRecords, fieldsKeysIncluded, tableData));
-                            reportSb.AppendLine($"  ✓ {tableKey}: {numRecords} record(s)");
+                            // Table couldn't be retrieved (API error)
+                            failCount++;
+                            continue;
                         }
-                    }
-                }
 
-                if (availableTables.Count == 0)
-                {
-                    // No priority tables found, list all available table names for debugging
-                    reportSb.AppendLine("\r\n⚠ No material/object/connectivity tables found with data.");
-                    reportSb.AppendLine("\r\nAll available tables in model:");
-                    for (int i = 0; i < Math.Min(20, numTables); i++)
-                    {
-                        reportSb.AppendLine($"  - {tableKeys[i]}");
-                    }
-                    if (numTables > 20)
-                    {
-                        reportSb.AppendLine($"  ... and {numTables - 20} more");
-                    }
-
-                    csvData = "";
-                    report = reportSb.ToString() +
-                            "\n\nERROR: No suitable tables with data were found.\n\n" +
-                            "Possible reasons:\n" +
-                            "1. Model has no objects (frames, areas, etc.)\n" +
-                            "2. Materials are not assigned to objects\n" +
-                            "3. Table names in this ETABS version don't match expected patterns\n\n" +
-                            "Note: You can view tables manually in ETABS: Display > Show Tables";
-                    return false;
-                }
-
-                // Step 3: Extract the table with the most records
-                var selectedTable = availableTables.OrderByDescending(t => t.recordCount).First();
-
-                reportSb.AppendLine($"\r\n✓ Extracting table with most data: {selectedTable.tableKey}");
-                reportSb.AppendLine($"  Records: {selectedTable.recordCount}, Fields: {selectedTable.fields.Length}");
-
-                var csv = new StringBuilder();
-                csv.AppendLine($"# Table: {selectedTable.tableKey}");
-                csv.AppendLine($"# Display Name: {selectedTable.tableName}");
-                csv.AppendLine($"# Records: {selectedTable.recordCount}");
-                csv.AppendLine($"# Note: {availableTables.Count} data-rich table(s) found in model");
-                csv.AppendLine();
-
-                // Add header row
-                csv.AppendLine(string.Join(",", selectedTable.fields));
-
-                // Add data rows
-                int numFields = selectedTable.fields.Length;
-                for (int i = 0; i < selectedTable.recordCount; i++)
-                {
-                    var rowData = new List<string>();
-                    for (int j = 0; j < numFields; j++)
-                    {
-                        int index = i * numFields + j;
-                        if (index < selectedTable.data.Length)
+                        if (numRecords == 0 || fieldsKeysIncluded == null || fieldsKeysIncluded.Length == 0)
                         {
-                            // Escape commas and quotes in data
-                            string value = selectedTable.data[index];
-                            if (value.Contains(",") || value.Contains("\""))
+                            // Table is empty or has no fields
+                            emptyCount++;
+                            continue;
+                        }
+
+                        // Stream table directly to file (memory-efficient)
+                        string safeTableKey = tableKey.Replace("/", "_").Replace("\\", "_").Replace(":", "_");
+                        string filePath = Path.Combine(outputFolder, $"Table_{safeTableKey}_{timestamp}.csv");
+
+                        using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
+                        {
+                            // Write metadata comments
+                            writer.WriteLine($"# Table Key: {tableKey}");
+                            writer.WriteLine($"# Display Name: {tableName}");
+                            writer.WriteLine($"# Records: {numRecords}");
+                            writer.WriteLine();
+
+                            // Write header row
+                            writer.WriteLine(string.Join(",", fieldsKeysIncluded));
+
+                            // Write data rows (streaming - no big StringBuilder)
+                            int numFields = fieldsKeysIncluded.Length;
+                            for (int row = 0; row < numRecords; row++)
                             {
-                                value = $"\"{value.Replace("\"", "\"\"")}\"";
+                                var rowData = new List<string>(numFields);
+                                for (int col = 0; col < numFields; col++)
+                                {
+                                    int dataIndex = row * numFields + col;
+                                    if (dataIndex < tableData.Length)
+                                    {
+                                        // Escape commas and quotes in data
+                                        string value = tableData[dataIndex];
+                                        if (value != null && (value.Contains(",") || value.Contains("\"") || value.Contains("\n")))
+                                        {
+                                            value = $"\"{value.Replace("\"", "\"\"")}\"";
+                                        }
+                                        rowData.Add(value ?? "");
+                                    }
+                                    else
+                                    {
+                                        rowData.Add("");
+                                    }
+                                }
+                                writer.WriteLine(string.Join(",", rowData));
                             }
-                            rowData.Add(value);
                         }
+
+                        // Success - file written
+                        successCount++;
+
+                        // Log first 10 and last 10, skip middle for large lists
+                        if (successCount <= 10 || i >= _cachedNumTables - 10)
+                        {
+                            reportSb.AppendLine($"  ✓ {tableKey}: {numRecords} records → {Path.GetFileName(filePath)}");
+                        }
+                        else if (successCount == 11)
+                        {
+                            reportSb.AppendLine($"  ... exporting {_cachedNumTables - 20} more tables ...");
+                        }
+
+                        // Release memory immediately (don't hold all tables in memory)
+                        tableData = null;
+                        fieldsKeysIncluded = null;
+                        fieldKeyList = null;
                     }
-                    csv.AppendLine(string.Join(",", rowData));
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        reportSb.AppendLine($"  ✗ {tableKey}: {ex.Message}");
+                    }
                 }
 
-                csvData = csv.ToString();
-
-                // Final report
-                reportSb.AppendLine($"\r\n✓ Successfully extracted '{selectedTable.tableKey}'");
-                reportSb.AppendLine($"  CSV size: {csv.Length} characters");
+                // Summary
                 reportSb.AppendLine();
-                reportSb.AppendLine($"All available data-rich tables ({availableTables.Count} total):");
-                foreach (var table in availableTables.OrderByDescending(t => t.recordCount))
-                {
-                    reportSb.AppendLine($"  - {table.tableKey}: {table.recordCount} records");
-                }
+                reportSb.AppendLine("=== Database Table Export Summary ===");
+                reportSb.AppendLine($"✓ Successfully exported: {successCount} tables");
+                if (emptyCount > 0)
+                    reportSb.AppendLine($"⊘ Empty tables skipped: {emptyCount}");
+                if (failCount > 0)
+                    reportSb.AppendLine($"✗ Failed to export: {failCount} tables");
+                reportSb.AppendLine($"\nAll table files saved to: {outputFolder}");
 
                 report = reportSb.ToString();
-                return true;
+                return successCount > 0;
             }
             catch (Exception ex)
             {
-                csvData = "";
-                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has objects with material assignments.";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has been analyzed.";
                 return false;
             }
         }
@@ -1761,31 +1797,24 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting story forces...\r\n");
 
-                cDatabaseTables dbTables = _SapModel.DatabaseTables;
-
-                // Get available tables
-                int numTables = 0;
-                string[] tableKeys = Array.Empty<string>();
-                string[] tableNames = Array.Empty<string>();
-                int[] importTypes = Array.Empty<int>();
-
-                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
-
-                if (ret != 0)
+                // Use cached table list
+                if (!EnsureTablesListCached())
                 {
                     csvData = "";
                     report = "ERROR: Failed to get available database tables.";
                     return false;
                 }
 
-                // Find "Story Forces" table
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
+
+                // Find "Story Forces" table in cached list
                 string storyForcesTableKey = null;
-                for (int i = 0; i < numTables; i++)
+                for (int i = 0; i < _cachedNumTables; i++)
                 {
-                    if (tableKeys[i].ToUpperInvariant().Contains("STORY") &&
-                        tableKeys[i].ToUpperInvariant().Contains("FORCE"))
+                    if (_cachedTableKeys[i].ToUpperInvariant().Contains("STORY") &&
+                        _cachedTableKeys[i].ToUpperInvariant().Contains("FORCE"))
                     {
-                        storyForcesTableKey = tableKeys[i];
+                        storyForcesTableKey = _cachedTableKeys[i];
                         break;
                     }
                 }
@@ -1863,31 +1892,24 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting story stiffness...\r\n");
 
-                cDatabaseTables dbTables = _SapModel.DatabaseTables;
-
-                // Get available tables
-                int numTables = 0;
-                string[] tableKeys = Array.Empty<string>();
-                string[] tableNames = Array.Empty<string>();
-                int[] importTypes = Array.Empty<int>();
-
-                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
-
-                if (ret != 0)
+                // Use cached table list
+                if (!EnsureTablesListCached())
                 {
                     csvData = "";
                     report = "ERROR: Failed to get available database tables.";
                     return false;
                 }
 
-                // Find "Story Stiffness" table
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
+
+                // Find "Story Stiffness" table in cached list
                 string storyStiffnessTableKey = null;
-                for (int i = 0; i < numTables; i++)
+                for (int i = 0; i < _cachedNumTables; i++)
                 {
-                    if (tableKeys[i].ToUpperInvariant().Contains("STORY") &&
-                        tableKeys[i].ToUpperInvariant().Contains("STIFF"))
+                    if (_cachedTableKeys[i].ToUpperInvariant().Contains("STORY") &&
+                        _cachedTableKeys[i].ToUpperInvariant().Contains("STIFF"))
                     {
-                        storyStiffnessTableKey = tableKeys[i];
+                        storyStiffnessTableKey = _cachedTableKeys[i];
                         break;
                     }
                 }
@@ -1965,32 +1987,25 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting centers of mass and rigidity...\r\n");
 
-                cDatabaseTables dbTables = _SapModel.DatabaseTables;
-
-                // Get available tables
-                int numTables = 0;
-                string[] tableKeys = Array.Empty<string>();
-                string[] tableNames = Array.Empty<string>();
-                int[] importTypes = Array.Empty<int>();
-
-                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
-
-                if (ret != 0)
+                // Use cached table list
+                if (!EnsureTablesListCached())
                 {
                     csvData = "";
                     report = "ERROR: Failed to get available database tables.";
                     return false;
                 }
 
-                // Find "Centers of Mass and Rigidity" table
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
+
+                // Find "Centers of Mass and Rigidity" table in cached list
                 string centersTableKey = null;
-                for (int i = 0; i < numTables; i++)
+                for (int i = 0; i < _cachedNumTables; i++)
                 {
-                    string tableKeyUpper = tableKeys[i].ToUpperInvariant();
+                    string tableKeyUpper = _cachedTableKeys[i].ToUpperInvariant();
                     if ((tableKeyUpper.Contains("CENTER") || tableKeyUpper.Contains("MASS")) &&
                         (tableKeyUpper.Contains("RIGID") || tableKeyUpper.Contains("MASS")))
                     {
-                        centersTableKey = tableKeys[i];
+                        centersTableKey = _cachedTableKeys[i];
                         break;
                     }
                 }
@@ -2255,24 +2270,17 @@ namespace ETABS_Plugin
                 }
                 sb.AppendLine();
 
-                // Check available database tables using dynamic discovery
+                // Check available database tables using cached list
                 sb.AppendLine("--- AVAILABLE DATABASE TABLES ---");
                 sb.AppendLine("  NOTE: Database tables are generated automatically by ETABS");
                 sb.AppendLine("  They should be available once the model has objects/materials");
                 sb.AppendLine();
                 try
                 {
-                    // Use GetAvailableTables API to discover all tables dynamically
-                    int numTables = 0;
-                    string[] tableKeys = null;
-                    string[] tableNames = null;
-                    int[] importTypes = null;
-
-                    int ret = _SapModel.DatabaseTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
-
-                    if (ret == 0 && numTables > 0)
+                    // Use cached table list if available, otherwise fetch
+                    if (EnsureTablesListCached() && _cachedNumTables > 0)
                     {
-                        sb.AppendLine($"  ✓ Found {numTables} database table(s) total");
+                        sb.AppendLine($"  ✓ Found {_cachedNumTables} database table(s) total");
                         sb.AppendLine();
 
                         // Categorize tables
@@ -2281,20 +2289,20 @@ namespace ETABS_Plugin
                         var analysisTables = new List<string>();
                         var otherTables = new List<string>();
 
-                        for (int i = 0; i < numTables; i++)
+                        for (int i = 0; i < _cachedNumTables; i++)
                         {
-                            string keyUpper = tableKeys[i].ToUpperInvariant();
+                            string keyUpper = _cachedTableKeys[i].ToUpperInvariant();
 
                             if (keyUpper.Contains("MATERIAL"))
-                                materialTables.Add(tableKeys[i]);
+                                materialTables.Add(_cachedTableKeys[i]);
                             else if (keyUpper.Contains("OBJECT") || keyUpper.Contains("ELEMENT") ||
                                      keyUpper.Contains("CONNECTIVITY") || keyUpper.Contains("SECTION"))
-                                objectTables.Add(tableKeys[i]);
+                                objectTables.Add(_cachedTableKeys[i]);
                             else if (keyUpper.Contains("MODAL") || keyUpper.Contains("REACTION") ||
                                      keyUpper.Contains("DRIFT") || keyUpper.Contains("FORCE"))
-                                analysisTables.Add(tableKeys[i]);
+                                analysisTables.Add(_cachedTableKeys[i]);
                             else
-                                otherTables.Add(tableKeys[i]);
+                                otherTables.Add(_cachedTableKeys[i]);
                         }
 
                         if (materialTables.Count > 0)
@@ -2383,12 +2391,23 @@ namespace ETABS_Plugin
                 // PERFORMANCE OPTIMIZATION: Setup operations once at the beginning instead of in each method
                 sb.AppendLine("Initializing...");
 
-                // 1. Set units once for all extractions
+                // 1. Clear and prepare table cache for this extraction session
+                ClearTablesListCache();
+                if (EnsureTablesListCached())
+                {
+                    sb.AppendLine($"  ✓ Database tables list cached ({_cachedNumTables} tables)");
+                }
+                else
+                {
+                    sb.AppendLine("  ⚠ Could not cache database tables list (some extractions may be limited)");
+                }
+
+                // 2. Set units once for all extractions
                 eUnits originalUnits = _SapModel.GetPresentUnits();
                 _SapModel.SetPresentUnits(eUnits.kN_m_C);
                 sb.AppendLine("  ✓ Units set to kN-m-C");
 
-                // 2. Setup all load cases and combos for output once
+                // 3. Setup all load cases and combos for output once
                 SetupAllCasesForOutput();
                 sb.AppendLine("  ✓ Load cases and combos configured for output");
 
@@ -2713,27 +2732,18 @@ namespace ETABS_Plugin
                     skipCount++;
                 }
 
-                // 14. Quantities Summary (might not work due to table names)
+                // 14. All Database Tables (exports ALL tables to individual CSV files)
                 currentStep++;
-                progressCallback?.Invoke(currentStep, totalSteps, "Extracting quantities summary...");
-                sb.AppendLine("14. Quantities Summary...");
-                if (ExtractQuantitiesSummary(out csvData, out result))
+                progressCallback?.Invoke(currentStep, totalSteps, "Exporting all database tables...");
+                sb.AppendLine("14. All Database Tables...");
+                if (ExtractAllDatabaseTables(outputFolder, timestamp, out result))
                 {
-                    string filePath = Path.Combine(outputFolder, $"QuantitiesSummary_{timestamp}.csv");
-                    if (SaveToFile(csvData, filePath, out string error))
-                    {
-                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
-                        successCount++;
-                    }
-                    else
-                    {
-                        sb.AppendLine($"   ✗ Save failed: {error}");
-                        failCount++;
-                    }
+                    sb.AppendLine($"   ✓ {result}");
+                    successCount++;
                 }
                 else
                 {
-                    sb.AppendLine($"   ⊘ Skipped (database table names may differ in this ETABS version)");
+                    sb.AppendLine($"   ⊘ {result}");
                     skipCount++;
                 }
 
