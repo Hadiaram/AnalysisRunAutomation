@@ -579,7 +579,8 @@ namespace ETABS_Plugin
                     int color = 0;
                     string notes = "";
                     string guid = "";
-                    ret = _SapModel.PropArea.GetOpening(propName, ref color, ref notes, ref guid);
+                    bool getOpening = false;
+                    ret = _SapModel.AreaObj.GetOpening(propName, ref getOpening);
 
                     if (ret != 0) continue; // Not an opening, skip
 
