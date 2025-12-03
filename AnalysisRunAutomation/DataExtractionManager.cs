@@ -28,9 +28,6 @@ namespace ETABS_Plugin
 
             try
             {
-                // Setup all cases for output
-                SetupAllCasesForOutput();
-
                 reportSb.AppendLine("Extracting base reactions using bulk API...\r\n");
 
                 // Use bulk BaseReact API - gets ALL load cases in ONE call
@@ -1148,9 +1145,6 @@ namespace ETABS_Plugin
         {
             try
             {
-                // Setup all cases for output
-                SetupAllCasesForOutput();
-
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1209,9 +1203,6 @@ namespace ETABS_Plugin
         {
             try
             {
-                // Setup all cases for output
-                SetupAllCasesForOutput();
-
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1283,9 +1274,6 @@ namespace ETABS_Plugin
         {
             try
             {
-                // Setup all cases for output
-                SetupAllCasesForOutput();
-
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1349,9 +1337,6 @@ namespace ETABS_Plugin
         {
             try
             {
-                // Setup all cases for output
-                SetupAllCasesForOutput();
-
                 cAnalysisResults results = _SapModel.Results;
 
                 int numResults = 0;
@@ -1776,101 +1761,87 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting story forces...\r\n");
 
-                // Setup all cases for output
-                SetupAllCasesForOutput();
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                // Save current units
-                eUnits originalUnits = _SapModel.GetPresentUnits();
-                _SapModel.SetPresentUnits(eUnits.kN_m_C);
+                // Get available tables
+                int numTables = 0;
+                string[] tableKeys = Array.Empty<string>();
+                string[] tableNames = Array.Empty<string>();
+                int[] importTypes = Array.Empty<int>();
 
-                try
+                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
+
+                if (ret != 0)
                 {
-                    cDatabaseTables dbTables = _SapModel.DatabaseTables;
+                    csvData = "";
+                    report = "ERROR: Failed to get available database tables.";
+                    return false;
+                }
 
-                    // Get available tables
-                    int numTables = 0;
-                    string[] tableKeys = Array.Empty<string>();
-                    string[] tableNames = Array.Empty<string>();
-                    int[] importTypes = Array.Empty<int>();
-
-                    int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
-
-                    if (ret != 0)
+                // Find "Story Forces" table
+                string storyForcesTableKey = null;
+                for (int i = 0; i < numTables; i++)
+                {
+                    if (tableKeys[i].ToUpperInvariant().Contains("STORY") &&
+                        tableKeys[i].ToUpperInvariant().Contains("FORCE"))
                     {
-                        csvData = "";
-                        report = "ERROR: Failed to get available database tables.";
-                        return false;
+                        storyForcesTableKey = tableKeys[i];
+                        break;
                     }
+                }
 
-                    // Find "Story Forces" table
-                    string storyForcesTableKey = null;
-                    for (int i = 0; i < numTables; i++)
+                if (storyForcesTableKey == null)
+                {
+                    csvData = "";
+                    report = "ERROR: 'Story Forces' table not found in database.\nPlease ensure analysis has been run.";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found table: {storyForcesTableKey}\r\n");
+
+                // Get table data
+                string[] fieldKeyList = null;
+                string groupName = "";
+                int tableVersion = 0;
+                string[] fieldsKeysIncluded = null;
+                int numRecords = 0;
+                string[] tableData = null;
+
+                ret = dbTables.GetTableForDisplayArray(storyForcesTableKey, ref fieldKeyList, groupName,
+                    ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                if (ret != 0 || numRecords == 0)
+                {
+                    csvData = "";
+                    report = "ERROR: No story force data available.\nPlease ensure analysis has been run.";
+                    return false;
+                }
+
+                int numFields = fieldsKeysIncluded.Length;
+
+                // Build CSV header from field names
+                sb.AppendLine(string.Join(",", fieldsKeysIncluded));
+
+                // Extract data rows
+                for (int i = 0; i < numRecords; i++)
+                {
+                    var rowData = new List<string>();
+                    for (int j = 0; j < numFields; j++)
                     {
-                        if (tableKeys[i].ToUpperInvariant().Contains("STORY") &&
-                            tableKeys[i].ToUpperInvariant().Contains("FORCE"))
+                        int dataIndex = i * numFields + j;
+                        if (dataIndex < tableData.Length)
                         {
-                            storyForcesTableKey = tableKeys[i];
-                            break;
+                            rowData.Add(tableData[dataIndex]);
                         }
                     }
-
-                    if (storyForcesTableKey == null)
-                    {
-                        csvData = "";
-                        report = "ERROR: 'Story Forces' table not found in database.\nPlease ensure analysis has been run.";
-                        return false;
-                    }
-
-                    reportSb.AppendLine($"✓ Found table: {storyForcesTableKey}\r\n");
-
-                    // Get table data
-                    string[] fieldKeyList = null;
-                    string groupName = "";
-                    int tableVersion = 0;
-                    string[] fieldsKeysIncluded = null;
-                    int numRecords = 0;
-                    string[] tableData = null;
-
-                    ret = dbTables.GetTableForDisplayArray(storyForcesTableKey, ref fieldKeyList, groupName,
-                        ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
-
-                    if (ret != 0 || numRecords == 0)
-                    {
-                        csvData = "";
-                        report = "ERROR: No story force data available.\nPlease ensure analysis has been run.";
-                        return false;
-                    }
-
-                    int numFields = fieldsKeysIncluded.Length;
-
-                    // Build CSV header from field names
-                    sb.AppendLine(string.Join(",", fieldsKeysIncluded));
-
-                    // Extract data rows
-                    for (int i = 0; i < numRecords; i++)
-                    {
-                        var rowData = new List<string>();
-                        for (int j = 0; j < numFields; j++)
-                        {
-                            int dataIndex = i * numFields + j;
-                            if (dataIndex < tableData.Length)
-                            {
-                                rowData.Add(tableData[dataIndex]);
-                            }
-                        }
-                        sb.AppendLine(string.Join(",", rowData));
-                    }
-
-                    reportSb.AppendLine($"✓ Extracted {numRecords} story force result(s)");
-
-                    csvData = sb.ToString();
-                    report = reportSb.ToString();
-                    return true;
+                    sb.AppendLine(string.Join(",", rowData));
                 }
-                finally
-                {
-                    _SapModel.SetPresentUnits(originalUnits);
-                }
+
+                reportSb.AppendLine($"✓ Extracted {numRecords} story force result(s)");
+
+                csvData = sb.ToString();
+                report = reportSb.ToString();
+                return true;
             }
             catch (Exception ex)
             {
@@ -2407,7 +2378,21 @@ namespace ETABS_Plugin
             try
             {
                 // Report initial progress
-                progressCallback?.Invoke(0, totalSteps, "Starting extraction...");
+                progressCallback?.Invoke(0, totalSteps, "Initializing extraction...");
+
+                // PERFORMANCE OPTIMIZATION: Setup operations once at the beginning instead of in each method
+                sb.AppendLine("Initializing...");
+
+                // 1. Set units once for all extractions
+                eUnits originalUnits = _SapModel.GetPresentUnits();
+                _SapModel.SetPresentUnits(eUnits.kN_m_C);
+                sb.AppendLine("  ✓ Units set to kN-m-C");
+
+                // 2. Setup all load cases and combos for output once
+                SetupAllCasesForOutput();
+                sb.AppendLine("  ✓ Load cases and combos configured for output");
+
+                sb.AppendLine();
 
                 // 1. Base Reactions
                 currentStep++;
@@ -2854,6 +2839,9 @@ namespace ETABS_Plugin
                 sb.AppendLine($"✗ Failed: {failCount} extractions");
                 sb.AppendLine($"⊘ Skipped: {skipCount} (not applicable)");
                 sb.AppendLine($"\nAll files saved to: {outputFolder}");
+
+                // Restore original units
+                _SapModel.SetPresentUnits(originalUnits);
 
                 report = sb.ToString();
                 return true;
