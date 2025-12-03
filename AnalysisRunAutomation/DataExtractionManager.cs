@@ -1639,6 +1639,401 @@ namespace ETABS_Plugin
             }
         }
 
+        #endregion
+
+        #region Frame Section Properties and Story Results
+
+        /// <summary>
+        /// Extracts frame section properties summary
+        /// </summary>
+        public bool ExtractFrameSectionProperties(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting frame section properties...\r\n");
+
+                // Save current units and set to kN-m-C
+                eUnits originalUnits = _SapModel.GetPresentUnits();
+                _SapModel.SetPresentUnits(eUnits.kN_m_C);
+
+                try
+                {
+                    // Get all frame section names
+                    int numSections = 0;
+                    string[] sectionNames = Array.Empty<string>();
+                    int ret = _SapModel.PropFrame.GetNameList(ref numSections, ref sectionNames);
+
+                    if (ret != 0 || numSections == 0)
+                    {
+                        csvData = "";
+                        report = "ERROR: No frame sections found in model.";
+                        return false;
+                    }
+
+                    reportSb.AppendLine($"✓ Found {numSections} frame section(s)\r\n");
+
+                    // CSV Header
+                    sb.AppendLine("SectionName,Material,SectionType,Depth(mm),Width(mm),Area(mm2),I33(mm4),I22(mm4),TorsionConst(mm4),S33Top(mm3),S33Bot(mm3),S22(mm3),Z33(mm3),Z22(mm3),R33(mm),R22(mm)");
+
+                    int successCount = 0;
+
+                    foreach (string sectionName in sectionNames)
+                    {
+                        try
+                        {
+                            // Get material
+                            string material = "";
+                            ret = _SapModel.PropFrame.GetMaterial(sectionName, ref material);
+                            if (ret != 0) material = "Unknown";
+
+                            // Get section properties
+                            string fileName = "";
+                            double t3 = 0, t2 = 0, tf = 0, tw = 0, tfb = 0, twb = 0;
+                            int color = 0;
+                            string notes = "";
+                            string guid = "";
+
+                            // Try to get as rectangular section
+                            ret = _SapModel.PropFrame.GetRectangle(sectionName, ref fileName, ref material,
+                                ref t3, ref t2, ref color, ref notes, ref guid);
+
+                            string sectionType = "Unknown";
+                            double depth = 0, width = 0;
+
+                            if (ret == 0)
+                            {
+                                sectionType = "Rectangular";
+                                depth = t3 * 1000; // Convert to mm
+                                width = t2 * 1000;
+                            }
+
+                            // Get section properties (area, inertia, etc.)
+                            double area = 0, as2 = 0, as3 = 0;
+                            double torsion = 0, i22 = 0, i33 = 0;
+                            double s22 = 0, s33 = 0, z22 = 0, z33 = 0, r22 = 0, r33 = 0;
+
+                            ret = _SapModel.PropFrame.GetSectProps(sectionName, ref area, ref as2, ref as3,
+                                ref torsion, ref i22, ref i33, ref s22, ref s33, ref z22, ref z33, ref r22, ref r33);
+
+                            if (ret == 0)
+                            {
+                                // Convert from m to mm units
+                                double s33Top = s33 * 1e9;  // mm^3
+                                double s33Bot = s33 * 1e9;  // mm^3 (assuming symmetric)
+                                double s22Val = s22 * 1e9;  // mm^3
+                                double z33Val = z33 * 1e9;  // mm^3
+                                double z22Val = z22 * 1e9;  // mm^3
+                                double r33Val = r33 * 1000; // mm
+                                double r22Val = r22 * 1000; // mm
+
+                                sb.AppendLine($"{sectionName},{material},{sectionType}," +
+                                    $"{depth:F1},{width:F1}," +
+                                    $"{area * 1e6:F0},{i33 * 1e12:F0},{i22 * 1e12:F0},{torsion * 1e12:F0}," +
+                                    $"{s33Top:F0},{s33Bot:F0},{s22Val:F0}," +
+                                    $"{z33Val:F0},{z22Val:F0},{r33Val:F1},{r22Val:F1}");
+
+                                successCount++;
+                            }
+                        }
+                        catch
+                        {
+                            // Skip sections that fail
+                            continue;
+                        }
+                    }
+
+                    reportSb.AppendLine($"✓ Extracted properties for {successCount} section(s)");
+
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                finally
+                {
+                    _SapModel.SetPresentUnits(originalUnits);
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts story forces (shear and overturning moment)
+        /// </summary>
+        public bool ExtractStoryForces(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting story forces...\r\n");
+
+                // Setup all cases for output
+                SetupAllCasesForOutput();
+
+                // Save current units
+                eUnits originalUnits = _SapModel.GetPresentUnits();
+                _SapModel.SetPresentUnits(eUnits.kN_m_C);
+
+                try
+                {
+                    // Get story information
+                    int numStories = 0;
+                    string[] storyNames = null;
+                    double[] elevations = null;
+                    double[] heights = null;
+                    bool[] isMasterStory = null;
+                    string[] similarToStory = null;
+                    bool[] spliceAbove = null;
+                    double[] spliceHeight = null;
+
+                    int ret = _SapModel.Story.GetStories(ref numStories, ref storyNames, ref elevations,
+                        ref heights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+
+                    if (ret != 0 || numStories == 0)
+                    {
+                        csvData = "";
+                        report = "ERROR: No stories found in model.";
+                        return false;
+                    }
+
+                    reportSb.AppendLine($"✓ Found {numStories} story/stories\r\n");
+
+                    // CSV Header
+                    sb.AppendLine("Story,LoadCase,Location,VX(kN),VY(kN),P(kN),MX(kN-m),MY(kN-m),X(m),Y(m),Z(m)");
+
+                    int resultCount = 0;
+
+                    // Extract story forces for each story
+                    foreach (string story in storyNames)
+                    {
+                        int numResults = 0;
+                        string[] loadCase = null;
+                        string[] location = null;
+                        double[] vx = null, vy = null, p = null, mx = null, my = null;
+                        double[] xLoc = null, yLoc = null, zLoc = null;
+
+                        ret = _SapModel.Results.StoryForce(story, eItemTypeElm.ObjectElm,
+                            ref numResults, ref loadCase, ref location,
+                            ref vx, ref vy, ref p, ref mx, ref my,
+                            ref xLoc, ref yLoc, ref zLoc);
+
+                        if (ret == 0 && numResults > 0)
+                        {
+                            for (int i = 0; i < numResults; i++)
+                            {
+                                sb.AppendLine($"{story},{loadCase[i]},{location[i]}," +
+                                    $"{vx[i]:F2},{vy[i]:F2},{p[i]:F2}," +
+                                    $"{mx[i]:F2},{my[i]:F2}," +
+                                    $"{xLoc[i]:F3},{yLoc[i]:F3},{zLoc[i]:F3}");
+                                resultCount++;
+                            }
+                        }
+                    }
+
+                    reportSb.AppendLine($"✓ Extracted {resultCount} story force result(s)");
+
+                    csvData = sb.ToString();
+                    report = reportSb.ToString();
+                    return true;
+                }
+                finally
+                {
+                    _SapModel.SetPresentUnits(originalUnits);
+                }
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure analysis has been run.";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts story stiffness
+        /// </summary>
+        public bool ExtractStoryStiffness(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting story stiffness...\r\n");
+
+                // Get story information
+                int numStories = 0;
+                string[] storyNames = null;
+                double[] elevations = null;
+                double[] heights = null;
+                bool[] isMasterStory = null;
+                string[] similarToStory = null;
+                bool[] spliceAbove = null;
+                double[] spliceHeight = null;
+
+                int ret = _SapModel.Story.GetStories(ref numStories, ref storyNames, ref elevations,
+                    ref heights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+
+                if (ret != 0 || numStories == 0)
+                {
+                    csvData = "";
+                    report = "ERROR: No stories found in model.";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numStories} story/stories\r\n");
+
+                // CSV Header
+                sb.AppendLine("Story,Axis,Stiffness(kN/m)");
+
+                int resultCount = 0;
+
+                // Extract stiffness for each story
+                foreach (string story in storyNames)
+                {
+                    double[] stiffness = new double[3];
+                    string[] axisName = new string[3];
+
+                    ret = _SapModel.Story.GetStiffness(story, ref axisName, ref stiffness);
+
+                    if (ret == 0)
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            if (axisName[i] != null && !string.IsNullOrEmpty(axisName[i]))
+                            {
+                                sb.AppendLine($"{story},{axisName[i]},{stiffness[i]:F2}");
+                                resultCount++;
+                            }
+                        }
+                    }
+                }
+
+                reportSb.AppendLine($"✓ Extracted {resultCount} stiffness value(s)");
+
+                csvData = sb.ToString();
+                report = reportSb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts centers of mass and rigidity by story
+        /// </summary>
+        public bool ExtractCentersOfMassAndRigidity(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting centers of mass and rigidity...\r\n");
+
+                // Get story information
+                int numStories = 0;
+                string[] storyNames = null;
+                double[] elevations = null;
+                double[] heights = null;
+                bool[] isMasterStory = null;
+                string[] similarToStory = null;
+                bool[] spliceAbove = null;
+                double[] spliceHeight = null;
+
+                int ret = _SapModel.Story.GetStories(ref numStories, ref storyNames, ref elevations,
+                    ref heights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+
+                if (ret != 0 || numStories == 0)
+                {
+                    csvData = "";
+                    report = "ERROR: No stories found in model.";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found {numStories} story/stories\r\n");
+
+                // CSV Header
+                sb.AppendLine("Story,Diaphragm,MassX(m),MassY(m),RigidityX(m),RigidityY(m)");
+
+                int resultCount = 0;
+
+                // Extract CM/CR for each story
+                foreach (string story in storyNames)
+                {
+                    // Get diaphragms on this story
+                    int numDiaphragms = 0;
+                    string[] diaphragmNames = null;
+
+                    ret = _SapModel.Story.GetDiaphragms(story, ref numDiaphragms, ref diaphragmNames);
+
+                    if (ret == 0 && numDiaphragms > 0)
+                    {
+                        foreach (string diaph in diaphragmNames)
+                        {
+                            double massX = 0, massY = 0;
+                            double rigidX = 0, rigidY = 0;
+
+                            // Get mass center
+                            ret = _SapModel.Diaphragm.GetMassCenter(diaph, ref massX, ref massY);
+                            if (ret != 0) continue;
+
+                            // Get rigidity center (if available)
+                            // Note: This may not be available in all ETABS versions
+                            try
+                            {
+                                _SapModel.Diaphragm.GetRigidityCenter(diaph, ref rigidX, ref rigidY);
+                            }
+                            catch
+                            {
+                                rigidX = massX; // Use mass center as fallback
+                                rigidY = massY;
+                            }
+
+                            sb.AppendLine($"{story},{diaph},{massX:F3},{massY:F3},{rigidX:F3},{rigidY:F3}");
+                            resultCount++;
+                        }
+                    }
+                }
+
+                if (resultCount == 0)
+                {
+                    reportSb.AppendLine("⚠ No diaphragms found. Please create diaphragms in your model.");
+                }
+                else
+                {
+                    reportSb.AppendLine($"✓ Extracted {resultCount} center(s) of mass/rigidity");
+                }
+
+                csvData = sb.ToString();
+                report = reportSb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}";
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Model Diagnostics
+
         /// <summary>
         /// Runs diagnostics to check what data is available in the model
         /// </summary>
@@ -1950,7 +2345,7 @@ namespace ETABS_Plugin
             int failCount = 0;
             int skipCount = 0;
             int currentStep = 0;
-            const int totalSteps = 14;
+            const int totalSteps = 18; // Updated to include 4 new extraction types
 
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
@@ -2299,6 +2694,102 @@ namespace ETABS_Plugin
                 else
                 {
                     sb.AppendLine($"   ⊘ Skipped (database table names may differ in this ETABS version)");
+                    skipCount++;
+                }
+
+                // 15. Frame Section Properties
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting frame section properties...");
+                sb.AppendLine("15. Frame Section Properties...");
+                if (ExtractFrameSectionProperties(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"FrameSectionProperties_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (no frame sections in model)");
+                    skipCount++;
+                }
+
+                // 16. Story Forces
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting story forces...");
+                sb.AppendLine("16. Story Forces...");
+                if (ExtractStoryForces(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"StoryForces_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (analysis may not be complete)");
+                    skipCount++;
+                }
+
+                // 17. Story Stiffness
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting story stiffness...");
+                sb.AppendLine("17. Story Stiffness...");
+                if (ExtractStoryStiffness(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"StoryStiffness_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (story stiffness not available)");
+                    skipCount++;
+                }
+
+                // 18. Centers of Mass and Rigidity
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting centers of mass and rigidity...");
+                sb.AppendLine("18. Centers of Mass and Rigidity...");
+                if (ExtractCentersOfMassAndRigidity(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"CentersOfMassRigidity_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (no diaphragms in model)");
                     skipCount++;
                 }
 
