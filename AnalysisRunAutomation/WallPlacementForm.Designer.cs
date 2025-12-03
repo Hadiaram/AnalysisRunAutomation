@@ -60,6 +60,8 @@ namespace ETABS_Plugin
             numElevation = new System.Windows.Forms.NumericUpDown();
             btnPlaceWall = new System.Windows.Forms.Button();
             btnLoadExample = new System.Windows.Forms.Button();
+            btnGenerateTemplate = new System.Windows.Forms.Button();
+            btnImportCsv = new System.Windows.Forms.Button();
             txtStatus = new System.Windows.Forms.TextBox();
             lblStatus = new System.Windows.Forms.Label();
             grpCoordinates.SuspendLayout();
@@ -416,9 +418,31 @@ namespace ETABS_Plugin
             btnLoadExample.UseVisualStyleBackColor = true;
             btnLoadExample.Click += btnLoadExample_Click;
             //
+            // btnGenerateTemplate
+            //
+            btnGenerateTemplate.Location = new System.Drawing.Point(12, 510);
+            btnGenerateTemplate.Name = "btnGenerateTemplate";
+            btnGenerateTemplate.Size = new System.Drawing.Size(175, 35);
+            btnGenerateTemplate.TabIndex = 7;
+            btnGenerateTemplate.Text = "1. Generate CSV Template";
+            btnGenerateTemplate.UseVisualStyleBackColor = true;
+            btnGenerateTemplate.Click += btnGenerateTemplate_Click;
+            //
+            // btnImportCsv
+            //
+            btnImportCsv.BackColor = System.Drawing.Color.LightBlue;
+            btnImportCsv.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnImportCsv.Location = new System.Drawing.Point(193, 510);
+            btnImportCsv.Name = "btnImportCsv";
+            btnImportCsv.Size = new System.Drawing.Size(179, 35);
+            btnImportCsv.TabIndex = 8;
+            btnImportCsv.Text = "2. Import from CSV";
+            btnImportCsv.UseVisualStyleBackColor = false;
+            btnImportCsv.Click += btnImportCsv_Click;
+            //
             // txtStatus
             //
-            txtStatus.Location = new System.Drawing.Point(12, 541);
+            txtStatus.Location = new System.Drawing.Point(12, 571);
             txtStatus.Multiline = true;
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
@@ -429,7 +453,7 @@ namespace ETABS_Plugin
             // lblStatus
             //
             lblStatus.AutoSize = true;
-            lblStatus.Location = new System.Drawing.Point(12, 523);
+            lblStatus.Location = new System.Drawing.Point(12, 553);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new System.Drawing.Size(42, 15);
             lblStatus.TabIndex = 6;
@@ -439,9 +463,11 @@ namespace ETABS_Plugin
             //
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(384, 673);
+            ClientSize = new System.Drawing.Size(384, 703);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
+            Controls.Add(btnImportCsv);
+            Controls.Add(btnGenerateTemplate);
             Controls.Add(btnLoadExample);
             Controls.Add(btnPlaceWall);
             Controls.Add(grpProperties);
@@ -506,6 +532,8 @@ namespace ETABS_Plugin
         private System.Windows.Forms.TextBox txtPierLabel;
         private System.Windows.Forms.Button btnPlaceWall;
         private System.Windows.Forms.Button btnLoadExample;
+        private System.Windows.Forms.Button btnGenerateTemplate;
+        private System.Windows.Forms.Button btnImportCsv;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;
     }

@@ -49,6 +49,7 @@
             btnRunAnalysis = new Button();
             btnRunWorkflow = new Button();
             btnPlaceWalls = new Button();
+            btnExtractData = new Button();
             txtStatus = new TextBox();
             lblStatus = new Label();
             grpMaterials.SuspendLayout();
@@ -305,11 +306,24 @@
             btnPlaceWalls.Location = new Point(17, 680);
             btnPlaceWalls.Margin = new Padding(3, 4, 3, 4);
             btnPlaceWalls.Name = "btnPlaceWalls";
-            btnPlaceWalls.Size = new Size(300, 35);
+            btnPlaceWalls.Size = new Size(145, 35);
             btnPlaceWalls.TabIndex = 14;
             btnPlaceWalls.Text = "Place Walls";
             btnPlaceWalls.UseVisualStyleBackColor = false;
             btnPlaceWalls.Click += btnPlaceWalls_Click;
+            //
+            // btnExtractData
+            //
+            btnExtractData.BackColor = Color.LightGreen;
+            btnExtractData.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnExtractData.Location = new Point(172, 680);
+            btnExtractData.Margin = new Padding(3, 4, 3, 4);
+            btnExtractData.Name = "btnExtractData";
+            btnExtractData.Size = new Size(145, 35);
+            btnExtractData.TabIndex = 15;
+            btnExtractData.Text = "Extract Data";
+            btnExtractData.UseVisualStyleBackColor = false;
+            btnExtractData.Click += btnExtractData_Click;
             //
             // txtStatus
             // 
@@ -338,6 +352,7 @@
             ClientSize = new Size(340, 897);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
+            Controls.Add(btnExtractData);
             Controls.Add(btnPlaceWalls);
             Controls.Add(btnRunWorkflow);
             Controls.Add(grpSections);
@@ -382,6 +397,7 @@
         private System.Windows.Forms.CheckBox chkWalls;
         private System.Windows.Forms.Button btnRunWorkflow;
         private System.Windows.Forms.Button btnPlaceWalls;
+        private System.Windows.Forms.Button btnExtractData;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;
     }
