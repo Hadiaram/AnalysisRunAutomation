@@ -25,10 +25,11 @@ namespace ETABS_Plugin
             double thickness,
             double betaAngle,
             string pierLabel,
+            out string report,
             string customLabel = "",
             string storyName = "",
-            string propertyName = "",
-            out string report)
+            string propertyName = ""
+        )
         {
             try
             {
@@ -259,9 +260,6 @@ namespace ETABS_Plugin
                         row.ThicknessMm / 1000.0, // Convert mm to m
                         row.BetaAngle,
                         row.PierLabel,
-                        row.Label,        // Custom label
-                        row.Story,        // Story assignment
-                        row.PropertyName, // Existing property
                         out wallReport
                     );
 
