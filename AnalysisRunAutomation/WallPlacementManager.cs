@@ -25,6 +25,9 @@ namespace ETABS_Plugin
             double thickness,
             double betaAngle,
             string pierLabel,
+            string customLabel = "",
+            string storyName = "",
+            string propertyName = "",
             out string report)
         {
             try
@@ -36,23 +39,36 @@ namespace ETABS_Plugin
                 if (!CheckResult(ret, "SetPresentUnits", ref report))
                     return false;
 
-                // Create wall property
-                string wallProp = $"WALL_{(int)(thickness * 1000)}mm_{materialName}";
-                ret = _SapModel.PropArea.SetWall(
-                    Name: wallProp,
-                    WallPropType: eWallPropType.Specified,
-                    ShellType: eShellType.ShellThick,
-                    MatProp: materialName,
-                    Thickness: thickness,
-                    color: -1,
-                    notes: "",
-                    GUID: ""
-                );
+                // Determine property name
+                string wallProp = propertyName;
+                bool useExistingProperty = !string.IsNullOrWhiteSpace(propertyName);
 
-                if (!CheckResult(ret, "PropArea.SetWall", ref report))
-                    return false;
+                if (!useExistingProperty)
+                {
+                    // Auto-generate property name if not provided
+                    wallProp = $"WALL_{(int)(thickness * 1000)}mm_{materialName}";
 
-                report += $"Wall property created: {wallProp}\r\n";
+                    // Create wall property
+                    ret = _SapModel.PropArea.SetWall(
+                        Name: wallProp,
+                        WallPropType: eWallPropType.Specified,
+                        ShellType: eShellType.ShellThick,
+                        MatProp: materialName,
+                        Thickness: thickness,
+                        color: -1,
+                        notes: "",
+                        GUID: ""
+                    );
+
+                    if (!CheckResult(ret, "PropArea.SetWall", ref report))
+                        return false;
+
+                    report += $"Wall property created: {wallProp}\r\n";
+                }
+                else
+                {
+                    report += $"Using existing property: {wallProp}\r\n";
+                }
 
                 // Create points
                 string p1 = "", p2 = "", p3 = "", p4 = "";
@@ -75,22 +91,41 @@ namespace ETABS_Plugin
 
                 report += $"Points created: {p1}, {p2}, {p3}, {p4}\r\n";
 
-                // Create wall area object
+                // Create wall area object with custom name if provided
                 string[] loop = new[] { p1, p2, p3, p4 };
-                string wallName = "";
+                string wallName = customLabel; // Use custom label if provided
 
                 ret = _SapModel.AreaObj.AddByPoint(
                     NumberPoints: loop.Length,
                     Point: ref loop,
                     Name: ref wallName,
                     PropName: wallProp,
-                    UserName: ""
+                    UserName: string.IsNullOrWhiteSpace(customLabel) ? "" : customLabel
                 );
 
                 if (!CheckResult(ret, "AreaObj.AddByPoint", ref report))
                     return false;
 
-                report += $"Wall area created: {wallName}\r\n";
+                report += $"Wall area created: {wallName}";
+                if (!string.IsNullOrWhiteSpace(customLabel) && wallName != customLabel)
+                {
+                    report += $" (requested: {customLabel})";
+                }
+                report += "\r\n";
+
+                // Assign to story if specified
+                if (!string.IsNullOrWhiteSpace(storyName))
+                {
+                    ret = _SapModel.AreaObj.SetGroupAssign(wallName, storyName);
+                    if (ret == 0)
+                    {
+                        report += $"Assigned to story: {storyName}\r\n";
+                    }
+                    else
+                    {
+                        report += $"⚠ Warning: Could not assign to story '{storyName}' (code: {ret})\r\n";
+                    }
+                }
 
                 // Set local axes orientation
                 ret = _SapModel.AreaObj.SetLocalAxes(wallName, betaAngle);
@@ -114,6 +149,8 @@ namespace ETABS_Plugin
                 report += $"  - Property: {wallProp}\r\n";
                 report += $"  - Thickness: {thickness * 1000} mm\r\n";
                 report += $"  - Elevation: {elevation} m\r\n";
+                if (!string.IsNullOrWhiteSpace(storyName))
+                    report += $"  - Story: {storyName}\r\n";
 
                 return true;
             }
@@ -222,6 +259,9 @@ namespace ETABS_Plugin
                         row.ThicknessMm / 1000.0, // Convert mm to m
                         row.BetaAngle,
                         row.PierLabel,
+                        row.Label,        // Custom label
+                        row.Story,        // Story assignment
+                        row.PropertyName, // Existing property
                         out wallReport
                     );
 
@@ -265,9 +305,14 @@ namespace ETABS_Plugin
 
                 report = $"✓ CSV template generated successfully:\r\n{outputPath}\r\n\r\n" +
                          "The template includes:\r\n" +
-                         "- Header row with all required columns\r\n" +
-                         "- Sample wall definitions (3 examples)\r\n" +
-                         "- Comments explaining the format\r\n\r\n" +
+                         "- Header row with all columns (required and optional)\r\n" +
+                         "- Detailed column descriptions in comments\r\n" +
+                         "- 3 example walls showing different use cases\r\n\r\n" +
+                         "Key features:\r\n" +
+                         "- Label: Set custom wall names\r\n" +
+                         "- Story: Assign walls to specific stories\r\n" +
+                         "- PropertyName: Use existing wall properties\r\n" +
+                         "- PierLabel: Assign pier labels for design\r\n\r\n" +
                          "Edit the template to define your walls, then import it using 'Import from CSV'.";
 
                 return true;

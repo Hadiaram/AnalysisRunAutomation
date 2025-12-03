@@ -13,6 +13,8 @@ namespace ETABS_Plugin
     public class WallCsvRow
     {
         public string WallName { get; set; } = "";
+        public string Label { get; set; } = ""; // Custom label/name for the wall
+        public string Story { get; set; } = ""; // Story/level to assign wall to
         public double X1 { get; set; }
         public double Y1 { get; set; }
         public double X2 { get; set; }
@@ -24,6 +26,7 @@ namespace ETABS_Plugin
         public double Elevation { get; set; }
         public string MaterialName { get; set; } = "";
         public double ThicknessMm { get; set; }
+        public string PropertyName { get; set; } = ""; // Optional: use existing property instead of auto-creating
         public double BetaAngle { get; set; }
         public string PierLabel { get; set; } = "";
     }
@@ -83,11 +86,16 @@ namespace ETABS_Plugin
                 headerMap[headers[i].Trim()] = i;
             }
 
-            // Required columns
+            // Required columns (only core coordinates and basic properties are truly required)
             string[] requiredColumns = new[]
             {
-                "WallName", "X1", "Y1", "X2", "Y2", "X3", "Y3", "X4", "Y4",
-                "Elevation", "MaterialName", "ThicknessMm", "BetaAngle", "PierLabel"
+                "WallName", "X1", "Y1", "X2", "Y2", "X3", "Y3", "X4", "Y4", "Elevation"
+            };
+
+            // Optional columns with defaults
+            string[] optionalColumns = new[]
+            {
+                "Label", "Story", "MaterialName", "ThicknessMm", "PropertyName", "BetaAngle", "PierLabel"
             };
 
             foreach (var required in requiredColumns)
@@ -117,6 +125,8 @@ namespace ETABS_Plugin
                     var row = new WallCsvRow
                     {
                         WallName = GetValue(headerMap, values, "WallName", ""),
+                        Label = GetValue(headerMap, values, "Label", ""),
+                        Story = GetValue(headerMap, values, "Story", ""),
                         X1 = GetDoubleValue(headerMap, values, "X1", 0),
                         Y1 = GetDoubleValue(headerMap, values, "Y1", 0),
                         X2 = GetDoubleValue(headerMap, values, "X2", 0),
@@ -128,6 +138,7 @@ namespace ETABS_Plugin
                         Elevation = GetDoubleValue(headerMap, values, "Elevation", 0),
                         MaterialName = GetValue(headerMap, values, "MaterialName", ""),
                         ThicknessMm = GetDoubleValue(headerMap, values, "ThicknessMm", 200),
+                        PropertyName = GetValue(headerMap, values, "PropertyName", ""),
                         BetaAngle = GetDoubleValue(headerMap, values, "BetaAngle", 0),
                         PierLabel = GetValue(headerMap, values, "PierLabel", "")
                     };
@@ -202,21 +213,43 @@ namespace ETABS_Plugin
         {
             var sb = new StringBuilder();
 
-            // Header
-            sb.AppendLine("WallName,X1,Y1,X2,Y2,X3,Y3,X4,Y4,Elevation,MaterialName,ThicknessMm,BetaAngle,PierLabel");
+            // Header with all columns
+            sb.AppendLine("WallName,Label,Story,X1,Y1,X2,Y2,X3,Y3,X4,Y4,Elevation,MaterialName,ThicknessMm,PropertyName,BetaAngle,PierLabel");
 
-            // Sample rows (comments)
-            sb.AppendLine("# Sample walls - modify or delete these rows");
-            sb.AppendLine("# Coordinates in meters, thickness in millimeters");
+            // Documentation
+            sb.AppendLine("# CSV Format for Wall Import");
+            sb.AppendLine("# Required columns: WallName, X1-Y1 through X4-Y4 (4 corners), Elevation");
+            sb.AppendLine("# Optional columns: Label, Story, MaterialName, ThicknessMm, PropertyName, BetaAngle, PierLabel");
+            sb.AppendLine("#");
+            sb.AppendLine("# Column Descriptions:");
+            sb.AppendLine("#   WallName: Identifier for this wall in the CSV (used for error reporting)");
+            sb.AppendLine("#   Label: Custom name/label for the wall in ETABS (leave blank for auto-generated)");
+            sb.AppendLine("#   Story: Story/level to assign wall to (e.g., 'Story1', 'Level 2')");
+            sb.AppendLine("#   X1,Y1 to X4,Y4: Four corner coordinates in meters (counterclockwise)");
+            sb.AppendLine("#   Elevation: Z-coordinate in meters");
+            sb.AppendLine("#   MaterialName: Material (e.g., 'CONC', 'C25') - leave blank to use default");
+            sb.AppendLine("#   ThicknessMm: Wall thickness in millimeters (default: 200)");
+            sb.AppendLine("#   PropertyName: Existing wall property name (leave blank to auto-create)");
+            sb.AppendLine("#   BetaAngle: Local axis rotation in degrees (default: 0)");
+            sb.AppendLine("#   PierLabel: Pier label for design (e.g., 'P1', 'P2')");
+            sb.AppendLine("#");
+            sb.AppendLine("# Coordinates are in meters, thickness in millimeters");
+            sb.AppendLine("# Lines starting with # are comments and will be ignored");
             sb.AppendLine("");
-            sb.AppendLine("# Example 1: Rectangular wall 4m long, 0.2m thick, at elevation 0");
-            sb.AppendLine("Wall_1,0,0,4,0,4,0.2,0,0.2,0,CONC,200,90,P1");
+
+            // Example 1: Full specification
+            sb.AppendLine("# Example 1: Rectangular wall 4m long, 0.2m thick, at Story1");
+            sb.AppendLine("Wall_1,W-01,Story1,0,0,4,0,4,0.2,0,0.2,0,CONC,200,,90,P1");
             sb.AppendLine("");
-            sb.AppendLine("# Example 2: Same wall at elevation 3m");
-            sb.AppendLine("Wall_2,0,0,4,0,4,0.2,0,0.2,3,CONC,200,90,P1");
+
+            // Example 2: Using existing property
+            sb.AppendLine("# Example 2: Wall using existing property 'WALL200', at elevation 3m");
+            sb.AppendLine("Wall_2,W-02,Story2,0,0,4,0,4,0.2,0,0.2,3,,,WALL200,90,P1");
             sb.AppendLine("");
-            sb.AppendLine("# Example 3: Wall along Y axis");
-            sb.AppendLine("Wall_3,0,0,0,4,0.2,4,0.2,0,0,CONC,250,0,P2");
+
+            // Example 3: Minimal specification (auto-generated property)
+            sb.AppendLine("# Example 3: Wall along Y axis with minimal specification");
+            sb.AppendLine("Wall_3,,,0,0,0,4,0.2,4,0.2,0,0,,,,0,P2");
 
             File.WriteAllText(outputPath, sb.ToString());
         }
