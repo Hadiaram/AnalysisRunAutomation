@@ -1660,6 +1660,65 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Legacy method for compatibility - returns summary of available tables
+        /// For full table export, use ExtractAllDatabaseTables() instead
+        /// </summary>
+        public bool ExtractQuantitiesSummary(out string csvData, out string report)
+        {
+            try
+            {
+                var reportSb = new StringBuilder();
+                var csvSb = new StringBuilder();
+
+                // Use cached table list
+                if (!EnsureTablesListCached())
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to get available database tables from ETABS API.\n" +
+                            "Possible reasons:\n" +
+                            "1. ETABS model is locked (File > Unlock Model)\n" +
+                            "2. API connection issue";
+                    return false;
+                }
+
+                if (_cachedNumTables == 0)
+                {
+                    csvData = "";
+                    report = "ERROR: No database tables available.\n\n" +
+                            "This usually means the model has no objects or data.";
+                    return false;
+                }
+
+                reportSb.AppendLine($"Found {_cachedNumTables} database table(s) in model\r\n");
+                reportSb.AppendLine("NOTE: This method returns a summary only.");
+                reportSb.AppendLine("For comprehensive table export, use 'Extract All Data' instead.\r\n");
+
+                // Build CSV summary
+                csvSb.AppendLine("# Database Tables Summary");
+                csvSb.AppendLine($"# Total Tables: {_cachedNumTables}");
+                csvSb.AppendLine();
+                csvSb.AppendLine("Table Key,Display Name");
+
+                for (int i = 0; i < _cachedNumTables; i++)
+                {
+                    csvSb.AppendLine($"\"{_cachedTableKeys[i]}\",\"{_cachedTableNames[i]}\"");
+                }
+
+                reportSb.AppendLine($"Generated summary of {_cachedNumTables} available tables");
+
+                csvData = csvSb.ToString();
+                report = reportSb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure the model has objects with material assignments.";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Frame Section Properties and Story Results
@@ -1836,7 +1895,7 @@ namespace ETABS_Plugin
                 int numRecords = 0;
                 string[] tableData = null;
 
-                ret = dbTables.GetTableForDisplayArray(storyForcesTableKey, ref fieldKeyList, groupName,
+                int ret = dbTables.GetTableForDisplayArray(storyForcesTableKey, ref fieldKeyList, groupName,
                     ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
 
                 if (ret != 0 || numRecords == 0)
@@ -1931,7 +1990,7 @@ namespace ETABS_Plugin
                 int numRecords = 0;
                 string[] tableData = null;
 
-                ret = dbTables.GetTableForDisplayArray(storyStiffnessTableKey, ref fieldKeyList, groupName,
+                int ret = dbTables.GetTableForDisplayArray(storyStiffnessTableKey, ref fieldKeyList, groupName,
                     ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
 
                 if (ret != 0 || numRecords == 0)
@@ -2027,7 +2086,7 @@ namespace ETABS_Plugin
                 int numRecords = 0;
                 string[] tableData = null;
 
-                ret = dbTables.GetTableForDisplayArray(centersTableKey, ref fieldKeyList, groupName,
+                int ret = dbTables.GetTableForDisplayArray(centersTableKey, ref fieldKeyList, groupName,
                     ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
 
                 if (ret != 0 || numRecords == 0)
