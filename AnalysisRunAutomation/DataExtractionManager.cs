@@ -551,6 +551,7 @@ namespace ETABS_Plugin
             const double MIN_OPENING_SIZE = 2.0; // 2 meters
             int totalOpeningsFound = 0;
             int tooSmallCount = 0;
+            int areaObjectsChecked = 0;
 
             try
             {
@@ -561,30 +562,36 @@ namespace ETABS_Plugin
                 string[] stories = Array.Empty<string>();
 
                 int ret = _SapModel.AreaObj.GetLabelNameList(ref numberNames, ref names, ref labels, ref stories);
-                if (ret != 0) return openings;
+                if (ret != 0)
+                {
+                    diagnosticReport?.AppendLine($"  ERROR: GetLabelNameList failed with code {ret}");
+                    return openings;
+                }
+
+                diagnosticReport?.AppendLine($"  Checking {numberNames} area objects for openings...");
 
                 // Check each area object to see if it's an opening
                 for (int i = 0; i < numberNames; i++)
                 {
                     string name = names[i];
                     string story = stories[i];
+                    areaObjectsChecked++;
 
                     // Get property
                     string propName = "";
                     ret = _SapModel.AreaObj.GetProperty(name, ref propName);
                     if (ret != 0 || string.IsNullOrEmpty(propName)) continue;
 
-                    // Check if it's an opening property
-                    // Try GetOpening - if it succeeds, it's an opening
-                    int color = 0;
-                    string notes = "";
-                    string guid = "";
-                    bool getOpening = false;
-                    ret = _SapModel.AreaObj.GetOpening(propName, ref getOpening);
+                    // Check if it's an opening
+                    // GetOpening checks if an area object is marked as an opening
+                    bool isOpening = false;
+                    ret = _SapModel.AreaObj.GetOpening(name, ref isOpening);
 
-                    if (ret != 0) continue; // Not an opening, skip
+                    // Skip if API call failed OR if it's not actually an opening
+                    if (ret != 0 || !isOpening) continue;
 
                     totalOpeningsFound++;
+                    diagnosticReport?.AppendLine($"    ✓ Found opening area object: '{name}' on story '{story}'");
 
                     // Get points to calculate dimensions
                     int numPoints = 0;
@@ -644,10 +651,24 @@ namespace ETABS_Plugin
                     }
                 }
 
-                diagnosticReport?.AppendLine($"\nOpening Summary: {totalOpeningsFound} total, {openings.Count} large enough, {tooSmallCount} too small");
+                diagnosticReport?.AppendLine($"\n  Opening Detection Summary:");
+                diagnosticReport?.AppendLine($"    - Area objects checked: {areaObjectsChecked}");
+                diagnosticReport?.AppendLine($"    - Total openings found: {totalOpeningsFound}");
+                diagnosticReport?.AppendLine($"    - Large enough (>= 2m x 2m): {openings.Count}");
+                diagnosticReport?.AppendLine($"    - Too small (< 2m x 2m): {tooSmallCount}");
+
+                if (totalOpeningsFound == 0)
+                {
+                    diagnosticReport?.AppendLine($"\n  ⚠ WARNING: No openings detected!");
+                    diagnosticReport?.AppendLine($"     Possible reasons:");
+                    diagnosticReport?.AppendLine($"     1. Model has no areas marked as openings (use Assign > Area > Opening)");
+                    diagnosticReport?.AppendLine($"     2. Openings created as holes within walls (not separate objects)");
+                    diagnosticReport?.AppendLine($"     3. Opening areas deleted after creation");
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                diagnosticReport?.AppendLine($"\n  ERROR in opening detection: {ex.Message}");
                 // If there's an error, return whatever openings we found
                 return openings;
             }
