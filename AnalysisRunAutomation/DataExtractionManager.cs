@@ -1785,61 +1785,83 @@ namespace ETABS_Plugin
 
                 try
                 {
-                    // Get story information
-                    int numStories = 0;
-                    string[] storyNames = null;
-                    double[] elevations = null;
-                    double[] heights = null;
-                    bool[] isMasterStory = null;
-                    string[] similarToStory = null;
-                    bool[] spliceAbove = null;
-                    double[] spliceHeight = null;
+                    cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                    int ret = _SapModel.Story.GetStories(ref numStories, ref storyNames, ref elevations,
-                        ref heights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+                    // Get available tables
+                    int numTables = 0;
+                    string[] tableKeys = Array.Empty<string>();
+                    string[] tableNames = Array.Empty<string>();
+                    int[] importTypes = Array.Empty<int>();
 
-                    if (ret != 0 || numStories == 0)
+                    int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
+
+                    if (ret != 0)
                     {
                         csvData = "";
-                        report = "ERROR: No stories found in model.";
+                        report = "ERROR: Failed to get available database tables.";
                         return false;
                     }
 
-                    reportSb.AppendLine($"✓ Found {numStories} story/stories\r\n");
-
-                    // CSV Header
-                    sb.AppendLine("Story,LoadCase,Location,VX(kN),VY(kN),P(kN),MX(kN-m),MY(kN-m),X(m),Y(m),Z(m)");
-
-                    int resultCount = 0;
-
-                    // Extract story forces for each story
-                    foreach (string story in storyNames)
+                    // Find "Story Forces" table
+                    string storyForcesTableKey = null;
+                    for (int i = 0; i < numTables; i++)
                     {
-                        int numResults = 0;
-                        string[] loadCase = null;
-                        string[] location = null;
-                        double[] vx = null, vy = null, p = null, mx = null, my = null;
-                        double[] xLoc = null, yLoc = null, zLoc = null;
-
-                        ret = _SapModel.Results.StoryForce(story, eItemTypeElm.ObjectElm,
-                            ref numResults, ref loadCase, ref location,
-                            ref vx, ref vy, ref p, ref mx, ref my,
-                            ref xLoc, ref yLoc, ref zLoc);
-
-                        if (ret == 0 && numResults > 0)
+                        if (tableKeys[i].ToUpperInvariant().Contains("STORY") &&
+                            tableKeys[i].ToUpperInvariant().Contains("FORCE"))
                         {
-                            for (int i = 0; i < numResults; i++)
-                            {
-                                sb.AppendLine($"{story},{loadCase[i]},{location[i]}," +
-                                    $"{vx[i]:F2},{vy[i]:F2},{p[i]:F2}," +
-                                    $"{mx[i]:F2},{my[i]:F2}," +
-                                    $"{xLoc[i]:F3},{yLoc[i]:F3},{zLoc[i]:F3}");
-                                resultCount++;
-                            }
+                            storyForcesTableKey = tableKeys[i];
+                            break;
                         }
                     }
 
-                    reportSb.AppendLine($"✓ Extracted {resultCount} story force result(s)");
+                    if (storyForcesTableKey == null)
+                    {
+                        csvData = "";
+                        report = "ERROR: 'Story Forces' table not found in database.\nPlease ensure analysis has been run.";
+                        return false;
+                    }
+
+                    reportSb.AppendLine($"✓ Found table: {storyForcesTableKey}\r\n");
+
+                    // Get table data
+                    string[] fieldKeyList = null;
+                    string groupName = "";
+                    int tableVersion = 0;
+                    string[] fieldsKeysIncluded = null;
+                    int numRecords = 0;
+                    string[] tableData = null;
+
+                    ret = dbTables.GetTableForDisplayArray(storyForcesTableKey, ref fieldKeyList, groupName,
+                        ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                    if (ret != 0 || numRecords == 0)
+                    {
+                        csvData = "";
+                        report = "ERROR: No story force data available.\nPlease ensure analysis has been run.";
+                        return false;
+                    }
+
+                    int numFields = fieldsKeysIncluded.Length;
+
+                    // Build CSV header from field names
+                    sb.AppendLine(string.Join(",", fieldsKeysIncluded));
+
+                    // Extract data rows
+                    for (int i = 0; i < numRecords; i++)
+                    {
+                        var rowData = new List<string>();
+                        for (int j = 0; j < numFields; j++)
+                        {
+                            int dataIndex = i * numFields + j;
+                            if (dataIndex < tableData.Length)
+                            {
+                                rowData.Add(tableData[dataIndex]);
+                            }
+                        }
+                        sb.AppendLine(string.Join(",", rowData));
+                    }
+
+                    reportSb.AppendLine($"✓ Extracted {numRecords} story force result(s)");
 
                     csvData = sb.ToString();
                     report = reportSb.ToString();
@@ -1870,55 +1892,83 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting story stiffness...\r\n");
 
-                // Get story information
-                int numStories = 0;
-                string[] storyNames = null;
-                double[] elevations = null;
-                double[] heights = null;
-                bool[] isMasterStory = null;
-                string[] similarToStory = null;
-                bool[] spliceAbove = null;
-                double[] spliceHeight = null;
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                int ret = _SapModel.Story.GetStories(ref numStories, ref storyNames, ref elevations,
-                    ref heights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+                // Get available tables
+                int numTables = 0;
+                string[] tableKeys = Array.Empty<string>();
+                string[] tableNames = Array.Empty<string>();
+                int[] importTypes = Array.Empty<int>();
 
-                if (ret != 0 || numStories == 0)
+                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
+
+                if (ret != 0)
                 {
                     csvData = "";
-                    report = "ERROR: No stories found in model.";
+                    report = "ERROR: Failed to get available database tables.";
                     return false;
                 }
 
-                reportSb.AppendLine($"✓ Found {numStories} story/stories\r\n");
-
-                // CSV Header
-                sb.AppendLine("Story,Axis,Stiffness(kN/m)");
-
-                int resultCount = 0;
-
-                // Extract stiffness for each story
-                foreach (string story in storyNames)
+                // Find "Story Stiffness" table
+                string storyStiffnessTableKey = null;
+                for (int i = 0; i < numTables; i++)
                 {
-                    double[] stiffness = new double[3];
-                    string[] axisName = new string[3];
-
-                    ret = _SapModel.Story.GetStiffness(story, ref axisName, ref stiffness);
-
-                    if (ret == 0)
+                    if (tableKeys[i].ToUpperInvariant().Contains("STORY") &&
+                        tableKeys[i].ToUpperInvariant().Contains("STIFF"))
                     {
-                        for (int i = 0; i < 3; i++)
-                        {
-                            if (axisName[i] != null && !string.IsNullOrEmpty(axisName[i]))
-                            {
-                                sb.AppendLine($"{story},{axisName[i]},{stiffness[i]:F2}");
-                                resultCount++;
-                            }
-                        }
+                        storyStiffnessTableKey = tableKeys[i];
+                        break;
                     }
                 }
 
-                reportSb.AppendLine($"✓ Extracted {resultCount} stiffness value(s)");
+                if (storyStiffnessTableKey == null)
+                {
+                    csvData = "";
+                    report = "ERROR: 'Story Stiffness' table not found in database.\nPlease ensure analysis has been run.";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found table: {storyStiffnessTableKey}\r\n");
+
+                // Get table data
+                string[] fieldKeyList = null;
+                string groupName = "";
+                int tableVersion = 0;
+                string[] fieldsKeysIncluded = null;
+                int numRecords = 0;
+                string[] tableData = null;
+
+                ret = dbTables.GetTableForDisplayArray(storyStiffnessTableKey, ref fieldKeyList, groupName,
+                    ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                if (ret != 0 || numRecords == 0)
+                {
+                    csvData = "";
+                    report = "ERROR: No story stiffness data available.\nPlease ensure analysis has been run.";
+                    return false;
+                }
+
+                int numFields = fieldsKeysIncluded.Length;
+
+                // Build CSV header from field names
+                sb.AppendLine(string.Join(",", fieldsKeysIncluded));
+
+                // Extract data rows
+                for (int i = 0; i < numRecords; i++)
+                {
+                    var rowData = new List<string>();
+                    for (int j = 0; j < numFields; j++)
+                    {
+                        int dataIndex = i * numFields + j;
+                        if (dataIndex < tableData.Length)
+                        {
+                            rowData.Add(tableData[dataIndex]);
+                        }
+                    }
+                    sb.AppendLine(string.Join(",", rowData));
+                }
+
+                reportSb.AppendLine($"✓ Extracted {numRecords} stiffness value(s)");
 
                 csvData = sb.ToString();
                 report = reportSb.ToString();
@@ -1927,7 +1977,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure analysis has been run.";
                 return false;
             }
         }
@@ -1944,79 +1994,84 @@ namespace ETABS_Plugin
             {
                 reportSb.AppendLine("Extracting centers of mass and rigidity...\r\n");
 
-                // Get story information
-                int numStories = 0;
-                string[] storyNames = null;
-                double[] elevations = null;
-                double[] heights = null;
-                bool[] isMasterStory = null;
-                string[] similarToStory = null;
-                bool[] spliceAbove = null;
-                double[] spliceHeight = null;
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
 
-                int ret = _SapModel.Story.GetStories(ref numStories, ref storyNames, ref elevations,
-                    ref heights, ref isMasterStory, ref similarToStory, ref spliceAbove, ref spliceHeight);
+                // Get available tables
+                int numTables = 0;
+                string[] tableKeys = Array.Empty<string>();
+                string[] tableNames = Array.Empty<string>();
+                int[] importTypes = Array.Empty<int>();
 
-                if (ret != 0 || numStories == 0)
+                int ret = dbTables.GetAvailableTables(ref numTables, ref tableKeys, ref tableNames, ref importTypes);
+
+                if (ret != 0)
                 {
                     csvData = "";
-                    report = "ERROR: No stories found in model.";
+                    report = "ERROR: Failed to get available database tables.";
                     return false;
                 }
 
-                reportSb.AppendLine($"✓ Found {numStories} story/stories\r\n");
-
-                // CSV Header
-                sb.AppendLine("Story,Diaphragm,MassX(m),MassY(m),RigidityX(m),RigidityY(m)");
-
-                int resultCount = 0;
-
-                // Extract CM/CR for each story
-                foreach (string story in storyNames)
+                // Find "Centers of Mass and Rigidity" table
+                string centersTableKey = null;
+                for (int i = 0; i < numTables; i++)
                 {
-                    // Get diaphragms on this story
-                    int numDiaphragms = 0;
-                    string[] diaphragmNames = null;
-
-                    ret = _SapModel.Story.GetDiaphragms(story, ref numDiaphragms, ref diaphragmNames);
-
-                    if (ret == 0 && numDiaphragms > 0)
+                    string tableKeyUpper = tableKeys[i].ToUpperInvariant();
+                    if ((tableKeyUpper.Contains("CENTER") || tableKeyUpper.Contains("MASS")) &&
+                        (tableKeyUpper.Contains("RIGID") || tableKeyUpper.Contains("MASS")))
                     {
-                        foreach (string diaph in diaphragmNames)
-                        {
-                            double massX = 0, massY = 0;
-                            double rigidX = 0, rigidY = 0;
-
-                            // Get mass center
-                            ret = _SapModel.Diaphragm.GetMassCenter(diaph, ref massX, ref massY);
-                            if (ret != 0) continue;
-
-                            // Get rigidity center (if available)
-                            // Note: This may not be available in all ETABS versions
-                            try
-                            {
-                                _SapModel.Diaphragm.GetRigidityCenter(diaph, ref rigidX, ref rigidY);
-                            }
-                            catch
-                            {
-                                rigidX = massX; // Use mass center as fallback
-                                rigidY = massY;
-                            }
-
-                            sb.AppendLine($"{story},{diaph},{massX:F3},{massY:F3},{rigidX:F3},{rigidY:F3}");
-                            resultCount++;
-                        }
+                        centersTableKey = tableKeys[i];
+                        break;
                     }
                 }
 
-                if (resultCount == 0)
+                if (centersTableKey == null)
                 {
-                    reportSb.AppendLine("⚠ No diaphragms found. Please create diaphragms in your model.");
+                    csvData = "";
+                    report = "ERROR: 'Centers of Mass and Rigidity' table not found in database.\nPlease ensure analysis has been run and diaphragms are defined.";
+                    return false;
                 }
-                else
+
+                reportSb.AppendLine($"✓ Found table: {centersTableKey}\r\n");
+
+                // Get table data
+                string[] fieldKeyList = null;
+                string groupName = "";
+                int tableVersion = 0;
+                string[] fieldsKeysIncluded = null;
+                int numRecords = 0;
+                string[] tableData = null;
+
+                ret = dbTables.GetTableForDisplayArray(centersTableKey, ref fieldKeyList, groupName,
+                    ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                if (ret != 0 || numRecords == 0)
                 {
-                    reportSb.AppendLine($"✓ Extracted {resultCount} center(s) of mass/rigidity");
+                    csvData = "";
+                    report = "ERROR: No centers of mass/rigidity data available.\nPlease ensure analysis has been run and diaphragms are defined.";
+                    return false;
                 }
+
+                int numFields = fieldsKeysIncluded.Length;
+
+                // Build CSV header from field names
+                sb.AppendLine(string.Join(",", fieldsKeysIncluded));
+
+                // Extract data rows
+                for (int i = 0; i < numRecords; i++)
+                {
+                    var rowData = new List<string>();
+                    for (int j = 0; j < numFields; j++)
+                    {
+                        int dataIndex = i * numFields + j;
+                        if (dataIndex < tableData.Length)
+                        {
+                            rowData.Add(tableData[dataIndex]);
+                        }
+                    }
+                    sb.AppendLine(string.Join(",", rowData));
+                }
+
+                reportSb.AppendLine($"✓ Extracted {numRecords} center(s) of mass/rigidity");
 
                 csvData = sb.ToString();
                 report = reportSb.ToString();
@@ -2025,7 +2080,7 @@ namespace ETABS_Plugin
             catch (Exception ex)
             {
                 csvData = "";
-                report = $"ERROR: {ex.Message}";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure analysis has been run and diaphragms are defined.";
                 return false;
             }
         }
