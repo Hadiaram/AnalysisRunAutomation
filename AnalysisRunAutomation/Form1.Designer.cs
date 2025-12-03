@@ -49,6 +49,7 @@
             btnRunAnalysis = new Button();
             btnRunWorkflow = new Button();
             btnPlaceWalls = new Button();
+            btnExtractWallData = new Button();
             txtStatus = new TextBox();
             lblStatus = new Label();
             grpMaterials.SuspendLayout();
@@ -311,9 +312,22 @@
             btnPlaceWalls.UseVisualStyleBackColor = false;
             btnPlaceWalls.Click += btnPlaceWalls_Click;
             //
+            // btnExtractWallData
+            //
+            btnExtractWallData.BackColor = Color.LightGreen;
+            btnExtractWallData.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnExtractWallData.Location = new Point(17, 723);
+            btnExtractWallData.Margin = new Padding(3, 4, 3, 4);
+            btnExtractWallData.Name = "btnExtractWallData";
+            btnExtractWallData.Size = new Size(300, 35);
+            btnExtractWallData.TabIndex = 15;
+            btnExtractWallData.Text = "Extract Wall Data (with Openings)";
+            btnExtractWallData.UseVisualStyleBackColor = false;
+            btnExtractWallData.Click += btnExtractWallData_Click;
+            //
             // txtStatus
-            // 
-            txtStatus.Location = new Point(17, 723);
+            //
+            txtStatus.Location = new Point(17, 790);
             txtStatus.Margin = new Padding(3, 4, 3, 4);
             txtStatus.Multiline = true;
             txtStatus.Name = "txtStatus";
@@ -323,21 +337,22 @@
             txtStatus.TabIndex = 4;
             // 
             // lblStatus
-            // 
+            //
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(17, 697);
+            lblStatus.Location = new Point(17, 764);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(52, 20);
             lblStatus.TabIndex = 5;
             lblStatus.Text = "Status:";
-            // 
+            //
             // Form1
             //
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(340, 897);
+            ClientSize = new Size(340, 950);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
+            Controls.Add(btnExtractWallData);
             Controls.Add(btnPlaceWalls);
             Controls.Add(btnRunWorkflow);
             Controls.Add(grpSections);
@@ -382,6 +397,7 @@
         private System.Windows.Forms.CheckBox chkWalls;
         private System.Windows.Forms.Button btnRunWorkflow;
         private System.Windows.Forms.Button btnPlaceWalls;
+        private System.Windows.Forms.Button btnExtractWallData;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;
     }

@@ -24,6 +24,7 @@ namespace ETABS_Plugin
         private LoadAssignmentManager _LoadAssignmentManager = null;
         private MassSourceManager _MassSourceManager = null;
         private AnalysisManager _AnalysisManager = null;
+        private ResultsManager _ResultsManager = null;
 
         public Form1(cSapModel SapModel, cPluginCallback Plugin)
         {
@@ -38,6 +39,7 @@ namespace ETABS_Plugin
             _LoadAssignmentManager = new LoadAssignmentManager(_SapModel);
             _MassSourceManager = new MassSourceManager(_SapModel);
             _AnalysisManager = new AnalysisManager(_SapModel);
+            _ResultsManager = new ResultsManager(_SapModel);
 
             InitializeComponent();
         }
@@ -874,6 +876,80 @@ namespace ETABS_Plugin
             {
                 txtStatus.AppendText($"ERROR opening wall placement window: {ex.Message}\r\n");
                 MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnExtractWallData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                txtStatus.AppendText("\r\n=== EXTRACTING WALL DATA WITH OPENING DETECTION ===\r\n");
+
+                // Extract wall data
+                if (_ResultsManager.ExtractWallData(out var wallDataList, out var extractReport))
+                {
+                    txtStatus.AppendText(extractReport + "\r\n");
+
+                    // Prompt user for CSV file location
+                    using (var saveDialog = new System.Windows.Forms.SaveFileDialog())
+                    {
+                        saveDialog.Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*";
+                        saveDialog.DefaultExt = "csv";
+                        saveDialog.FileName = $"WallData_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                        saveDialog.Title = "Save Wall Data to CSV";
+
+                        if (saveDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            // Export to CSV
+                            if (_ResultsManager.ExportWallDataToCSV(wallDataList, saveDialog.FileName, out var exportReport))
+                            {
+                                txtStatus.AppendText(exportReport + "\r\n");
+                                MessageBox.Show(
+                                    $"Wall data extracted and exported successfully!\n\n" +
+                                    $"File: {saveDialog.FileName}\n" +
+                                    $"Total walls: {wallDataList.Count}\n" +
+                                    $"Core walls: {wallDataList.Count(w => w.IsCoreWall)}\n" +
+                                    $"Regular walls: {wallDataList.Count(w => !w.IsCoreWall)}",
+                                    "Extraction Complete",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                txtStatus.AppendText(exportReport + "\r\n");
+                                MessageBox.Show(
+                                    "Wall data extracted but CSV export failed.\nSee Status window for details.",
+                                    "Export Warning",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning);
+                            }
+                        }
+                        else
+                        {
+                            txtStatus.AppendText("CSV export cancelled by user.\r\n");
+                        }
+                    }
+                }
+                else
+                {
+                    txtStatus.AppendText(extractReport + "\r\n");
+                    MessageBox.Show(
+                        "Wall data extraction failed.\nSee Status window for details.",
+                        "Extraction Failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"\r\nERROR: {ex.Message}\r\n");
+                txtStatus.AppendText($"Stack trace: {ex.StackTrace}\r\n");
+                MessageBox.Show($"Error extracting wall data:\n\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
             }
         }
 
