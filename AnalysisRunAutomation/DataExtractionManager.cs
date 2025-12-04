@@ -2534,11 +2534,11 @@ namespace ETABS_Plugin
                 ClearTablesListCache();
                 if (EnsureTablesListCached())
                 {
-                    sb.AppendLine($"  ✓ Database tables list cached ({_cachedNumTables} tables)");
+                    sb.AppendLine($"  ✓ Connected to ETABS database (found {_cachedNumTables} available tables)");
                 }
                 else
                 {
-                    sb.AppendLine("  ⚠ Could not cache database tables list (some extractions may be limited)");
+                    sb.AppendLine("  ⚠ Could not connect to ETABS database (some extractions may be limited)");
                 }
 
                 // 2. Set units once for all extractions
@@ -2897,9 +2897,14 @@ namespace ETABS_Plugin
 
                 sb.AppendLine();
                 sb.AppendLine("=== SUMMARY ===");
+                sb.AppendLine($"Total extractions: 14 data points");
                 sb.AppendLine($"✓ Success: {successCount} files");
                 sb.AppendLine($"✗ Failed: {failCount} extractions");
                 sb.AppendLine($"⊘ Skipped: {skipCount} (not applicable)");
+                sb.AppendLine($"\nNote: Only 3 ETABS database tables were extracted:");
+                sb.AppendLine($"  - Story Forces");
+                sb.AppendLine($"  - Story Stiffness");
+                sb.AppendLine($"  - Centers of Mass and Rigidity");
                 sb.AppendLine($"\nAll files saved to: {outputFolder}");
 
                 // Restore original units
