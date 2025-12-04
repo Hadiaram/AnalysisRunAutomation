@@ -2208,6 +2208,102 @@ namespace ETABS_Plugin
             }
         }
 
+        /// <summary>
+        /// Extracts story max over average drifts
+        /// </summary>
+        public bool ExtractStoryMaxOverAvgDrifts(out string csvData, out string report)
+        {
+            var sb = new StringBuilder();
+            var reportSb = new StringBuilder();
+
+            try
+            {
+                reportSb.AppendLine("Extracting story max/avg drifts...\r\n");
+
+                // Use cached table list
+                if (!EnsureTablesListCached())
+                {
+                    csvData = "";
+                    report = "ERROR: Failed to get available database tables.";
+                    return false;
+                }
+
+                cDatabaseTables dbTables = _SapModel.DatabaseTables;
+
+                // Find "StoryMaxOverAvgDrifts" table in cached list
+                string driftTableKey = null;
+                for (int i = 0; i < _cachedNumTables; i++)
+                {
+                    string tableKeyUpper = _cachedTableKeys[i].ToUpperInvariant();
+                    if (tableKeyUpper.Contains("STORYMAX") ||
+                        (tableKeyUpper.Contains("MAX") && tableKeyUpper.Contains("AVG") && tableKeyUpper.Contains("DRIFT")))
+                    {
+                        driftTableKey = _cachedTableKeys[i];
+                        break;
+                    }
+                }
+
+                if (driftTableKey == null)
+                {
+                    csvData = "";
+                    report = "ERROR: 'StoryMaxOverAvgDrifts' table not found in database.\nPlease ensure analysis has been run.";
+                    return false;
+                }
+
+                reportSb.AppendLine($"✓ Found table: {driftTableKey}\r\n");
+
+                // Get table data
+                string[] fieldKeyList = null;
+                string groupName = "";
+                int tableVersion = 0;
+                string[] fieldsKeysIncluded = null;
+                int numRecords = 0;
+                string[] tableData = null;
+
+                int ret = dbTables.GetTableForDisplayArray(driftTableKey, ref fieldKeyList, groupName,
+                    ref tableVersion, ref fieldsKeysIncluded, ref numRecords, ref tableData);
+
+                if (ret != 0 || numRecords == 0)
+                {
+                    csvData = "";
+                    report = "ERROR: No story max/avg drift data available.\nPlease ensure analysis has been run.";
+                    return false;
+                }
+
+                int numFields = fieldsKeysIncluded.Length;
+
+                // Build CSV header from field names
+                sb.AppendLine(string.Join(",", fieldsKeysIncluded));
+
+                // Extract data rows
+                for (int i = 0; i < numRecords; i++)
+                {
+                    var rowData = new List<string>();
+                    for (int j = 0; j < numFields; j++)
+                    {
+                        int dataIndex = i * numFields + j;
+                        if (dataIndex < tableData.Length)
+                        {
+                            rowData.Add(tableData[dataIndex]);
+                        }
+                    }
+                    sb.AppendLine(string.Join(",", rowData));
+                }
+
+                reportSb.AppendLine($"✓ Extracted {numRecords} story max/avg drift result(s)");
+
+                csvData = sb.ToString();
+                report = reportSb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                csvData = "";
+                report = $"ERROR: {ex.Message}\n\nPlease ensure analysis has been run.";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Model Diagnostics
@@ -2518,7 +2614,7 @@ namespace ETABS_Plugin
             int failCount = 0;
             int skipCount = 0;
             int currentStep = 0;
-            const int totalSteps = 14; // Streamlined extraction: only essential data points
+            const int totalSteps = 15; // Streamlined extraction: only essential data points
 
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
@@ -2895,16 +2991,41 @@ namespace ETABS_Plugin
                     skipCount++;
                 }
 
+                // 15. Story Max Over Avg Drifts
+                currentStep++;
+                progressCallback?.Invoke(currentStep, totalSteps, "Extracting story max/avg drifts...");
+                sb.AppendLine("15. Story Max Over Avg Drifts...");
+                if (ExtractStoryMaxOverAvgDrifts(out csvData, out result))
+                {
+                    string filePath = Path.Combine(outputFolder, $"StoryMaxOverAvgDrifts_{timestamp}.csv");
+                    if (SaveToFile(csvData, filePath, out string error))
+                    {
+                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
+                        successCount++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"   ✗ Save failed: {error}");
+                        failCount++;
+                    }
+                }
+                else
+                {
+                    sb.AppendLine($"   ⊘ Skipped (story max/avg drifts not available)");
+                    skipCount++;
+                }
+
                 sb.AppendLine();
                 sb.AppendLine("=== SUMMARY ===");
-                sb.AppendLine($"Total extractions: 14 data points");
+                sb.AppendLine($"Total extractions: 15 data points");
                 sb.AppendLine($"✓ Success: {successCount} files");
                 sb.AppendLine($"✗ Failed: {failCount} extractions");
                 sb.AppendLine($"⊘ Skipped: {skipCount} (not applicable)");
-                sb.AppendLine($"\nNote: Only 3 ETABS database tables were extracted:");
+                sb.AppendLine($"\nNote: Only 4 ETABS database tables were extracted:");
                 sb.AppendLine($"  - Story Forces");
                 sb.AppendLine($"  - Story Stiffness");
                 sb.AppendLine($"  - Centers of Mass and Rigidity");
+                sb.AppendLine($"  - Story Max Over Avg Drifts");
                 sb.AppendLine($"\nAll files saved to: {outputFolder}");
 
                 // Restore original units
