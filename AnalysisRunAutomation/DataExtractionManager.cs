@@ -2518,7 +2518,7 @@ namespace ETABS_Plugin
             int failCount = 0;
             int skipCount = 0;
             int currentStep = 0;
-            const int totalSteps = 18; // Updated to include 4 new extraction types
+            const int totalSteps = 14; // Streamlined extraction: only essential data points
 
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
@@ -2823,97 +2823,10 @@ namespace ETABS_Plugin
                     failCount++;
                 }
 
-                // 12. Base Shear
-                currentStep++;
-                progressCallback?.Invoke(currentStep, totalSteps, "Extracting base shear...");
-                sb.AppendLine("12. Base Shear...");
-                if (ExtractBaseShear(out csvData, out result))
-                {
-                    string filePath = Path.Combine(outputFolder, $"BaseShear_{timestamp}.csv");
-                    if (SaveToFile(csvData, filePath, out string error))
-                    {
-                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
-                        successCount++;
-                    }
-                    else
-                    {
-                        sb.AppendLine($"   ✗ Save failed: {error}");
-                        failCount++;
-                    }
-                }
-                else
-                {
-                    sb.AppendLine($"   ✗ {result}");
-                    failCount++;
-                }
-
-                // 13. Composite Column Design (might not apply)
-                currentStep++;
-                progressCallback?.Invoke(currentStep, totalSteps, "Extracting composite column design...");
-                sb.AppendLine("13. Composite Column Design...");
-                if (ExtractCompositeColumnDesign(out csvData, out result))
-                {
-                    string filePath = Path.Combine(outputFolder, $"CompositeColumnDesign_{timestamp}.csv");
-                    if (SaveToFile(csvData, filePath, out string error))
-                    {
-                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
-                        successCount++;
-                    }
-                    else
-                    {
-                        sb.AppendLine($"   ✗ Save failed: {error}");
-                        failCount++;
-                    }
-                }
-                else
-                {
-                    sb.AppendLine($"   ⊘ Skipped (not applicable to this model)");
-                    skipCount++;
-                }
-
-                // 14. All Database Tables (exports ALL tables to individual CSV files)
-                currentStep++;
-                progressCallback?.Invoke(currentStep, totalSteps, "Exporting all database tables...");
-                sb.AppendLine("14. All Database Tables...");
-                if (ExtractAllDatabaseTables(outputFolder, timestamp, out result))
-                {
-                    sb.AppendLine($"   ✓ {result}");
-                    successCount++;
-                }
-                else
-                {
-                    sb.AppendLine($"   ⊘ {result}");
-                    skipCount++;
-                }
-
-                // 15. Frame Section Properties
-                currentStep++;
-                progressCallback?.Invoke(currentStep, totalSteps, "Extracting frame section properties...");
-                sb.AppendLine("15. Frame Section Properties...");
-                if (ExtractFrameSectionProperties(out csvData, out result))
-                {
-                    string filePath = Path.Combine(outputFolder, $"FrameSectionProperties_{timestamp}.csv");
-                    if (SaveToFile(csvData, filePath, out string error))
-                    {
-                        sb.AppendLine($"   ✓ Saved: {Path.GetFileName(filePath)}");
-                        successCount++;
-                    }
-                    else
-                    {
-                        sb.AppendLine($"   ✗ Save failed: {error}");
-                        failCount++;
-                    }
-                }
-                else
-                {
-                    sb.AppendLine($"   ⊘ Skipped (no frame sections in model)");
-                    skipCount++;
-                }
-
-                // 16. Story Forces
+                // 12. Story Forces
                 currentStep++;
                 progressCallback?.Invoke(currentStep, totalSteps, "Extracting story forces...");
-                sb.AppendLine("16. Story Forces...");
+                sb.AppendLine("12. Story Forces...");
                 if (ExtractStoryForces(out csvData, out result))
                 {
                     string filePath = Path.Combine(outputFolder, $"StoryForces_{timestamp}.csv");
@@ -2934,10 +2847,10 @@ namespace ETABS_Plugin
                     skipCount++;
                 }
 
-                // 17. Story Stiffness
+                // 13. Story Stiffness
                 currentStep++;
                 progressCallback?.Invoke(currentStep, totalSteps, "Extracting story stiffness...");
-                sb.AppendLine("17. Story Stiffness...");
+                sb.AppendLine("13. Story Stiffness...");
                 if (ExtractStoryStiffness(out csvData, out result))
                 {
                     string filePath = Path.Combine(outputFolder, $"StoryStiffness_{timestamp}.csv");
@@ -2958,10 +2871,10 @@ namespace ETABS_Plugin
                     skipCount++;
                 }
 
-                // 18. Centers of Mass and Rigidity
+                // 14. Centers of Mass and Rigidity
                 currentStep++;
                 progressCallback?.Invoke(currentStep, totalSteps, "Extracting centers of mass and rigidity...");
-                sb.AppendLine("18. Centers of Mass and Rigidity...");
+                sb.AppendLine("14. Centers of Mass and Rigidity...");
                 if (ExtractCentersOfMassAndRigidity(out csvData, out result))
                 {
                     string filePath = Path.Combine(outputFolder, $"CentersOfMassRigidity_{timestamp}.csv");
