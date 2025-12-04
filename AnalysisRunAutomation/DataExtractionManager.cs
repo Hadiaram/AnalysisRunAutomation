@@ -580,9 +580,45 @@ namespace ETABS_Plugin
         }
 
         /// <summary>
+        /// PERFORMANCE OPTIMIZATION: Caches all point coordinates at once
+        /// This avoids thousands of individual API calls during element extraction
+        /// </summary>
+        private Dictionary<string, (double x, double y, double z)> GetAllPointCoordinates()
+        {
+            var coords = new Dictionary<string, (double x, double y, double z)>();
+
+            try
+            {
+                int nPts = 0;
+                string[] ptNames = Array.Empty<string>();
+                int ret = _SapModel.PointObj.GetNameList(ref nPts, ref ptNames);
+
+                if (ret != 0 || nPts == 0)
+                    return coords;
+
+                // Fetch all coordinates in one pass
+                foreach (var ptName in ptNames)
+                {
+                    double x = 0, y = 0, z = 0;
+                    ret = _SapModel.PointObj.GetCoordCartesian(ptName, ref x, ref y, ref z);
+                    if (ret == 0)
+                    {
+                        coords[ptName] = (x, y, z);
+                    }
+                }
+            }
+            catch
+            {
+                // Return whatever we got
+            }
+
+            return coords;
+        }
+
+        /// <summary>
         /// Extracts openings from the model that are >= 2m x 2m
         /// </summary>
-        private List<OpeningInfo> ExtractLargeOpenings(StringBuilder diagnosticReport = null)
+        private List<OpeningInfo> ExtractLargeOpenings(StringBuilder diagnosticReport = null, Dictionary<string, (double x, double y, double z)> pointCoords = null)
         {
             var openings = new List<OpeningInfo>();
             const double MIN_OPENING_SIZE = 2.0; // 2 meters
@@ -644,17 +680,26 @@ namespace ETABS_Plugin
                     for (int j = 0; j < numPoints; j++)
                     {
                         double x = 0, y = 0, z = 0;
-                        ret = _SapModel.PointObj.GetCoordCartesian(points[j], ref x, ref y, ref z);
-                        if (ret == 0)
+
+                        // PERFORMANCE: Use cached coordinates if available
+                        if (pointCoords != null && pointCoords.ContainsKey(points[j]))
                         {
-                            sumX += x;
-                            sumY += y;
-                            sumZ += z;
-                            minX = Math.Min(minX, x);
-                            maxX = Math.Max(maxX, x);
-                            minY = Math.Min(minY, y);
-                            maxY = Math.Max(maxY, y);
+                            (x, y, z) = pointCoords[points[j]];
                         }
+                        else
+                        {
+                            // Fallback to API call if cache not available
+                            ret = _SapModel.PointObj.GetCoordCartesian(points[j], ref x, ref y, ref z);
+                            if (ret != 0) continue;
+                        }
+
+                        sumX += x;
+                        sumY += y;
+                        sumZ += z;
+                        minX = Math.Min(minX, x);
+                        maxX = Math.Max(maxX, x);
+                        minY = Math.Min(minY, y);
+                        maxY = Math.Max(maxY, y);
                     }
 
                     // Calculate dimensions (in meters, since units are kN-m-C)
@@ -767,10 +812,15 @@ namespace ETABS_Plugin
 
                 try
                 {
+                    // PERFORMANCE OPTIMIZATION: Cache all point coordinates once at the start
+                    progressCallback?.Invoke(0, 100, "Caching point coordinates...");
+                    var pointCoords = GetAllPointCoordinates();
+                    reportSb.AppendLine($"✓ Cached {pointCoords.Count} point coordinate(s) for fast lookup");
+
                     // First, extract all large openings (>= 2m x 2m)
                     progressCallback?.Invoke(0, 100, "Identifying large openings...");
                     reportSb.AppendLine("Opening Detection Diagnostics:");
-                    var largeOpenings = ExtractLargeOpenings(reportSb);
+                    var largeOpenings = ExtractLargeOpenings(reportSb, pointCoords);
                     reportSb.AppendLine($"\n✓ Found {largeOpenings.Count} large opening(s) (>= 2m x 2m)");
 
                     // Get all area objects
@@ -849,17 +899,26 @@ namespace ETABS_Plugin
                     for (int j = 0; j < numPoints; j++)
                     {
                         double x = 0, y = 0, z = 0;
-                        ret = _SapModel.PointObj.GetCoordCartesian(points[j], ref x, ref y, ref z);
-                        if (ret == 0)
+
+                        // PERFORMANCE: Use cached coordinates
+                        if (pointCoords.ContainsKey(points[j]))
                         {
-                            sumX += x;
-                            sumY += y;
-                            sumZ += z;
-                            minX = Math.Min(minX, x);
-                            maxX = Math.Max(maxX, x);
-                            minY = Math.Min(minY, y);
-                            maxY = Math.Max(maxY, y);
+                            (x, y, z) = pointCoords[points[j]];
                         }
+                        else
+                        {
+                            // Fallback to API call if point not in cache
+                            ret = _SapModel.PointObj.GetCoordCartesian(points[j], ref x, ref y, ref z);
+                            if (ret != 0) continue;
+                        }
+
+                        sumX += x;
+                        sumY += y;
+                        sumZ += z;
+                        minX = Math.Min(minX, x);
+                        maxX = Math.Max(maxX, x);
+                        minY = Math.Min(minY, y);
+                        maxY = Math.Max(maxY, y);
                     }
 
                     // Calculate centroid
@@ -1009,6 +1068,10 @@ namespace ETABS_Plugin
 
                 try
                 {
+                    // PERFORMANCE OPTIMIZATION: Cache all point coordinates once at the start
+                    var pointCoords = GetAllPointCoordinates();
+                    reportSb.AppendLine($"✓ Cached {pointCoords.Count} point coordinate(s) for fast lookup\r\n");
+
                     // Get all frame objects
                     int numberNames = 0;
                     string[] names = Array.Empty<string>();
@@ -1068,11 +1131,26 @@ namespace ETABS_Plugin
                     double x1 = 0, y1 = 0, z1 = 0;
                     double x2 = 0, y2 = 0, z2 = 0;
 
-                    ret = _SapModel.PointObj.GetCoordCartesian(point1, ref x1, ref y1, ref z1);
-                    if (ret != 0) continue;
+                    // PERFORMANCE: Use cached coordinates
+                    if (pointCoords.ContainsKey(point1))
+                    {
+                        (x1, y1, z1) = pointCoords[point1];
+                    }
+                    else
+                    {
+                        ret = _SapModel.PointObj.GetCoordCartesian(point1, ref x1, ref y1, ref z1);
+                        if (ret != 0) continue;
+                    }
 
-                    ret = _SapModel.PointObj.GetCoordCartesian(point2, ref x2, ref y2, ref z2);
-                    if (ret != 0) continue;
+                    if (pointCoords.ContainsKey(point2))
+                    {
+                        (x2, y2, z2) = pointCoords[point2];
+                    }
+                    else
+                    {
+                        ret = _SapModel.PointObj.GetCoordCartesian(point2, ref x2, ref y2, ref z2);
+                        if (ret != 0) continue;
+                    }
 
                     // Calculate length
                     double length = Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2) + Math.Pow(z2 - z1, 2));
