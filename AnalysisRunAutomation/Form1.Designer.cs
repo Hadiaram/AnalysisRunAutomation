@@ -49,6 +49,7 @@
             btnRunAnalysis = new Button();
             btnRunWorkflow = new Button();
             btnPlaceWalls = new Button();
+            btnPlaceColumns = new Button();
             btnExtractData = new Button();
             btnDesignCheck = new Button();
             txtStatus = new TextBox();
@@ -313,6 +314,19 @@
             btnPlaceWalls.UseVisualStyleBackColor = false;
             btnPlaceWalls.Click += btnPlaceWalls_Click;
             //
+            // btnPlaceColumns
+            //
+            btnPlaceColumns.BackColor = Color.LightSkyBlue;
+            btnPlaceColumns.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnPlaceColumns.Location = new Point(172, 722);
+            btnPlaceColumns.Margin = new Padding(3, 4, 3, 4);
+            btnPlaceColumns.Name = "btnPlaceColumns";
+            btnPlaceColumns.Size = new Size(145, 35);
+            btnPlaceColumns.TabIndex = 17;
+            btnPlaceColumns.Text = "Place Columns";
+            btnPlaceColumns.UseVisualStyleBackColor = false;
+            btnPlaceColumns.Click += btnPlaceColumns_Click;
+            //
             // btnExtractData
             //
             btnExtractData.BackColor = Color.LightGreen;
@@ -367,6 +381,7 @@
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
             Controls.Add(btnDesignCheck);
+            Controls.Add(btnPlaceColumns);
             Controls.Add(btnExtractData);
             Controls.Add(btnPlaceWalls);
             Controls.Add(btnRunWorkflow);
@@ -412,6 +427,7 @@
         private System.Windows.Forms.CheckBox chkWalls;
         private System.Windows.Forms.Button btnRunWorkflow;
         private System.Windows.Forms.Button btnPlaceWalls;
+        private System.Windows.Forms.Button btnPlaceColumns;
         private System.Windows.Forms.Button btnExtractData;
         private System.Windows.Forms.Button btnDesignCheck;
         private System.Windows.Forms.TextBox txtStatus;

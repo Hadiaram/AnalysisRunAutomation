@@ -877,6 +877,20 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnPlaceColumns_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ColumnPlacementForm columnForm = new ColumnPlacementForm(_SapModel);
+                columnForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"ERROR opening column placement window: {ex.Message}\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void btnExtractData_Click(object sender, EventArgs e)
         {
             try
