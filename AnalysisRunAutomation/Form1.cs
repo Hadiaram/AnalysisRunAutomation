@@ -891,6 +891,20 @@ namespace ETABS_Plugin
             }
         }
 
+        private void btnDesignCheck_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DesignCheckForm designCheckForm = new DesignCheckForm(_SapModel);
+                designCheckForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                txtStatus.AppendText($"ERROR opening design check window: {ex.Message}\r\n");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // must include a call to finish()

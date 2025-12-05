@@ -50,6 +50,7 @@
             btnRunWorkflow = new Button();
             btnPlaceWalls = new Button();
             btnExtractData = new Button();
+            btnDesignCheck = new Button();
             txtStatus = new TextBox();
             lblStatus = new Label();
             grpMaterials.SuspendLayout();
@@ -325,9 +326,22 @@
             btnExtractData.UseVisualStyleBackColor = false;
             btnExtractData.Click += btnExtractData_Click;
             //
+            // btnDesignCheck
+            //
+            btnDesignCheck.BackColor = Color.Orange;
+            btnDesignCheck.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnDesignCheck.Location = new Point(17, 722);
+            btnDesignCheck.Margin = new Padding(3, 4, 3, 4);
+            btnDesignCheck.Name = "btnDesignCheck";
+            btnDesignCheck.Size = new Size(300, 35);
+            btnDesignCheck.TabIndex = 16;
+            btnDesignCheck.Text = "Design Check / Code Verify";
+            btnDesignCheck.UseVisualStyleBackColor = false;
+            btnDesignCheck.Click += btnDesignCheck_Click;
+            //
             // txtStatus
-            // 
-            txtStatus.Location = new Point(17, 723);
+            //
+            txtStatus.Location = new Point(17, 785);
             txtStatus.Margin = new Padding(3, 4, 3, 4);
             txtStatus.Multiline = true;
             txtStatus.Name = "txtStatus";
@@ -335,11 +349,11 @@
             txtStatus.ScrollBars = ScrollBars.Vertical;
             txtStatus.Size = new Size(300, 149);
             txtStatus.TabIndex = 4;
-            // 
+            //
             // lblStatus
-            // 
+            //
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(17, 697);
+            lblStatus.Location = new Point(17, 761);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(52, 20);
             lblStatus.TabIndex = 5;
@@ -349,9 +363,10 @@
             //
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(340, 897);
+            ClientSize = new Size(340, 945);
             Controls.Add(lblStatus);
             Controls.Add(txtStatus);
+            Controls.Add(btnDesignCheck);
             Controls.Add(btnExtractData);
             Controls.Add(btnPlaceWalls);
             Controls.Add(btnRunWorkflow);
@@ -398,6 +413,7 @@
         private System.Windows.Forms.Button btnRunWorkflow;
         private System.Windows.Forms.Button btnPlaceWalls;
         private System.Windows.Forms.Button btnExtractData;
+        private System.Windows.Forms.Button btnDesignCheck;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.Label lblStatus;
     }
